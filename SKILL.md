@@ -47,18 +47,30 @@ springBootVersion、springCloudVersion、mainClass（主类）、packageRoots（
 
 ---
 
-### 阶段二：业务领域检测
+### 阶段二：业务领域发现（代码驱动）
 
-1. **读取** `references/domains.json` 获取业务领域列表。该文件定义了所有待检测的电商领域及其 Grep 模式。
-2. 对 JSON 中每个领域，执行 Grep（`--include="*.java"`，排除 `target/` 和 `build/` 目录），使用其 `grep` 字段作为搜索模式。
-3. 若 JSON 文件不存在，使用以下默认列表：
+不从预定义清单对答案，而是从代码实际的包结构出发，自动发现业务领域。
 
-> **如何新增业务领域**：编辑 `references/domains.json`，在 `domains` 数组中添加新条目即可。格式：`{ "name": "领域中文名", "grep": "正则模式" }`。无需修改任何其他文件。
+1. **读取** `references/domains.json`，获取 `vocabulary`（关键词 → 中文标签映射）和 `excludePaths`（需过滤的技术包名列表）。
 
-对每个领域：
-- 统计匹配文件数；提取最多 5 个类名
-- 若 fileCount > 0 标记 `detected: true`，否则 `detected: false`
-- 对检测到的领域，记录 3-5 个关键类名
+2. **扫描包结构**：Bash 运行 `find src/main/java -type d`，列出所有包目录路径。
+
+3. **过滤技术包**：排除 `excludePaths` 中列出的通用包名（如 common、util、config、model、dto 等），以及包含 `target/`、`build/`、`test/` 的路径。剩余的目录即为"候选业务包"。
+
+4. **提取业务关键词**：从每个候选业务包的路径中提取"业务关键词"。取路径中过滤后的包名片段，例如：
+   - `com/example/order/service` → 关键词 `order`
+   - `com/example/payment/gateway` → 关键词 `payment`
+   - `com/example/user/controller` → 关键词 `user`
+
+5. **映射中文标签**：用 `vocabulary` 将每个英文关键词映射为中文业务领域名。未匹配到的关键词保留英文原名（如 `livestream` → `livestream`，待日后补充 vocabulary）。
+
+6. **去重合并**：多个关键词映射到同一中文标签时自动合并为一个领域（如 `inventory` + `stock` + `warehouse` → 都归入"库存管理"）。
+
+7. **验证 & 统计**：对每个发现的业务领域，Grep 确认其包下是否包含 Service/Controller/Repository 类，统计文件数和关键类名（最多 5 个）。
+
+8. **输出**：生成 `businessDomains[]` 数组，每个条目含 `name`（中文标签）、`detected: true`、`fileCount`、`keyClasses`。未被 vocabulary 覆盖的领域也会正常输出，只是标签为英文原名。
+
+> **如何扩展词汇表**：编辑 `references/domains.json`，在 `vocabulary` 中添加 `"新关键词": "中文标签"` 即可。无需修改其他文件。`excludePaths` 可视项目结构调整。
 
 ---
 
@@ -230,8 +242,7 @@ springBootVersion、springCloudVersion、mainClass（主类）、packageRoots（
 ```
 通用DFX得分 = 通用DFX各维度得分之和 / 13
 业务DFX得分 = 业务DFX各维度得分之和 / 11
-领域覆盖度 = 检测到的业务领域数 / domains.json 中配置的领域总数
-综合得分 = 通用DFX × 0.40 + 业务DFX × 0.40 + 领域覆盖度 × 0.20
+综合得分 = 通用DFX × 0.50 + 业务DFX × 0.50
 ```
 
 得分评级：
@@ -270,7 +281,7 @@ springBootVersion、springCloudVersion、mainClass（主类）、packageRoots（
       "recommendations": ["改进建议"] }
   ],
   "scores": {
-    "overall": 0.0, "genericDFX": 0.0, "businessDFX": 0.0, "landscapeCoverage": 0.0
+    "overall": 0.0, "genericDFX": 0.0, "businessDFX": 0.0
   },
   "remediation": [
     {

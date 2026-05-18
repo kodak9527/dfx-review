@@ -2,28 +2,23 @@
 
 ## 一、业务逻辑提取
 
-从类名模式、包结构、Spring 注解中识别电商业务领域。
+从代码实际的包结构出发，自动发现业务领域——而非从预定义清单对答案。
 
-> **配置方式**：业务领域列表定义在 `references/domains.json` 中。扫描时从该文件读取领域名和 Grep 模式。如需新增领域，在该文件的 `domains` 数组中添加即可，格式：`{ "name": "领域中文名", "grep": "正则模式" }`。无需修改本文件或 SKILL.md。
+**工作方式**：
 
-默认内置的电商业务领域如下：
+1. 扫描 `src/main/java` 下所有包目录
+2. 过滤掉 `domains.json` 中 `excludePaths` 列出的技术/通用包（如 common、util、config、model 等）
+3. 从剩余的业务包中提取关键词（如 `order`、`payment`、`user`）
+4. 用 `domains.json` 中的 `vocabulary` 将英文关键词映射为中文业务领域标签
+5. 未在 vocabulary 中的关键词保留英文原名，并在报告中展示
+6. 同一中文标签下的多个关键词自动合并（如 `inventory` + `stock` → 都归入"库存管理"）
 
-| # | 业务领域 | 搜索模式 | 检测标准 |
-|---|---------|---------|---------|
-| 1 | 订单处理 | `class.*Order` | ≥3 个 Order 相关类 |
-| 2 | 支付/账单 | `class.*Payment\|class.*Transaction\|class.*Refund` | ≥2 个支付相关类或支付网关集成 |
-| 3 | 库存管理 | `class.*Inventor\|class.*Stock\|class.*Sku\|class.*Warehouse` | ≥2 个库存相关类 |
-| 4 | 购物车/结算 | `class.*Cart\|class.*Checkout\|class.*Basket` | ≥1 个购物车或结算类 |
-| 5 | 用户/账户 | `class.*User\|class.*Account\|class.*Customer\|class.*Auth` | ≥3 个用户相关类 |
-| 6 | 商品/目录 | `class.*Product\|class.*Catalog\|class.*Category` | ≥3 个商品相关类 |
-| 7 | 促销/优惠券 | `class.*Coupon\|class.*Promotion\|class.*Discount` | ≥1 个促销或优惠券类 |
-| 8 | 物流/配送 | `class.*Shipping\|class.*Logistics\|class.*Delivery\|class.*Fulfill` | ≥1 个物流相关类 |
-| 9 | 消息通知 | `class.*Notification\|class.*Notif\|class.*Email.*Service\|class.*Sms` | ≥1 个通知类 |
-| 10 | 秒杀/抢购 | `class.*Flash\|class.*Seckill\|class.*Spike\|class.*Burst` | ≥1 个秒杀相关类 |
-| 11 | 评价/评分 | `class.*Review\|class.*Rating\|class.*Feedback` | ≥1 个评价类 |
-| 12 | 管理后台 | `class.*Admin\|class.*Dashboard\|class.*Ops` | ≥1 个管理后台类 |
+> **扩展方式**：编辑 `references/domains.json`：
+> - 在 `vocabulary` 中添加 `"英文关键词": "中文标签"` 来增加业务领域映射
+> - 在 `excludePaths` 中调整需要过滤的包名列表
+> - 无需修改本文件或 SKILL.md
 
-**输出**：`{领域名 → 文件数, 关键类名[]}`。文件数 > 0 的领域标记为"已检测到"。
+**输出**：`{领域名 → 文件数, 关键类名[]}`。所有从代码中发现的领域均标记为"已检测到"。
 
 ---
 

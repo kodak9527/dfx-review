@@ -466,7 +466,6 @@ function renderScoreHero(){
     '<div class="score-details">'+
     scoreDetail('通用 DFX',R.scores.genericDFX,'generic')+
     scoreDetail('业务 DFX',R.scores.businessDFX,'business')+
-    scoreDetail('领域覆盖度',R.scores.landscapeCoverage,'landscape')+
     '</div>';
 }
 
@@ -492,10 +491,9 @@ function renderLandscape(){
   var domains=R.businessDomains||[];
   var grid=document.getElementById('landscape-grid');
   grid.innerHTML=domains.map(function(d){
-    var cls=d.detected?'':'not-detected';
-    return '<div class="landscape-card '+cls+'">'+
-      '<div class="domain-name">'+(d.detected?'&#9679; ':'&#9675; ')+d.name+'</div>'+
-      '<div class="file-count">'+(d.detected?d.fileCount+' 个文件':'未检测到')+'</div>'+
+    return '<div class="landscape-card">'+
+      '<div class="domain-name">&#9679; '+escHtml(d.name)+'</div>'+
+      '<div class="file-count">'+d.fileCount+' 个文件</div>'+
       (d.keyClasses&&d.keyClasses.length?'<div class="key-class">'+d.keyClasses.slice(0,3).join(', ')+'</div>':'')+
       '</div>';
   }).join('');
