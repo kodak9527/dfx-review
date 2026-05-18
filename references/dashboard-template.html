@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DFX 运维审视报告</title>
+<style>
+/* ===== Reset & Base ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-primary:#f8fafc;
+  --bg-secondary:#ffffff;
+  --bg-card:#ffffff;
+  --text-primary:#1e293b;
+  --text-secondary:#64748b;
+  --text-muted:#94a3b8;
+  --border-color:#e2e8f0;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.07),0 2px 4px -2px rgba(0,0,0,.05);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -4px rgba(0,0,0,.05);
+  --radius:12px;
+  --radius-sm:8px;
+  --green-bg:#dcfce7;--green-text:#166534;--green-border:#bbf7d0;
+  --amber-bg:#fef3c7;--amber-text:#92400e;--amber-border:#fde68a;
+  --red-bg:#fee2e2;--red-text:#991b1b;--red-border:#fecaca;
+  --accent:#6366f1;
+  --accent-light:#e0e7ff;
+  --chart-fill:rgba(99,102,241,.15);
+  --chart-stroke:rgba(99,102,241,.7);
+}
+[data-theme="dark"]{
+  --bg-primary:#0f172a;
+  --bg-secondary:#1e293b;
+  --bg-card:#1e293b;
+  --text-primary:#f1f5f9;
+  --text-secondary:#94a3b8;
+  --text-muted:#64748b;
+  --border-color:#334155;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.4);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.5);
+  --green-bg:#022c22;--green-text:#4ade80;--green-border:#064e3b;
+  --amber-bg:#422006;--amber-text:#fbbf24;--amber-border:#78350f;
+  --red-bg:#2e0404;--red-text:#f87171;--red-border:#7f1d1d;
+  --accent:#818cf8;
+  --accent-light:#1e1b4b;
+  --chart-fill:rgba(129,140,248,.2);
+  --chart-stroke:rgba(129,140,248,.7);
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue","Microsoft YaHei","PingFang SC",Arial,sans-serif;
+  background:var(--bg-primary);
+  color:var(--text-primary);
+  line-height:1.6;
+  padding:0;
+  min-height:100vh;
+}
+.container{max-width:1280px;margin:0 auto;padding:0 24px 48px}
+
+/* ===== Header ===== */
+.header{
+  background:var(--bg-secondary);
+  border-bottom:1px solid var(--border-color);
+  padding:16px 24px;
+  position:sticky;top:0;z-index:100;
+  box-shadow:var(--shadow-sm);
+}
+.header-inner{
+  max-width:1280px;margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+}
+.header-left h1{font-size:1.25rem;font-weight:700}
+.header-left .meta{
+  font-size:.8rem;color:var(--text-secondary);margin-top:2px;
+  display:flex;flex-wrap:wrap;gap:6px 16px;
+}
+.header-right{display:flex;align-items:center;gap:12px}
+.theme-toggle{
+  background:var(--bg-primary);border:1px solid var(--border-color);
+  border-radius:50%;width:36px;height:36px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;transition:all .2s;
+  color:var(--text-primary);
+}
+.theme-toggle:hover{background:var(--accent-light)}
+
+/* ===== Score Hero ===== */
+.score-hero{
+  display:flex;align-items:center;justify-content:center;
+  gap:40px;padding:40px 0;flex-wrap:wrap;
+}
+.gauge-container{flex-shrink:0}
+.gauge-label{text-align:center;margin-top:8px;font-size:.85rem;color:var(--text-secondary)}
+.score-details{display:flex;flex-direction:column;gap:12px;min-width:220px}
+.score-item{display:flex;align-items:center;gap:12px}
+.score-item .label{width:100px;font-size:.85rem;color:var(--text-secondary)}
+.score-item .bar-bg{
+  flex:1;height:8px;background:var(--border-color);border-radius:4px;overflow:hidden;
+  min-width:120px;
+}
+.score-item .bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.score-item .value{width:48px;text-align:right;font-weight:700;font-size:.9rem}
+.bar-fill.generic{background:linear-gradient(90deg,#6366f1,#818cf8)}
+.bar-fill.business{background:linear-gradient(90deg,#8b5cf6,#a78bfa)}
+.bar-fill.landscape{background:linear-gradient(90deg,#06b6d4,#22d3ee)}
+
+/* ===== Section Titles ===== */
+.section-title{
+  font-size:1.15rem;font-weight:700;margin:32px 0 16px;
+  padding-bottom:8px;border-bottom:2px solid var(--accent);
+  display:inline-block;
+}
+
+/* ===== Business Landscape Cards ===== */
+.landscape-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+  gap:12px;
+}
+.landscape-card{
+  background:var(--bg-card);border:1px solid var(--border-color);
+  border-radius:var(--radius-sm);padding:16px;
+  box-shadow:var(--shadow-sm);transition:all .2s;
+}
+.landscape-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.landscape-card .domain-name{font-weight:600;font-size:.9rem}
+.landscape-card .file-count{font-size:.75rem;color:var(--text-muted);margin-top:4px}
+.landscape-card .key-class{
+  font-size:.7rem;color:var(--text-muted);margin-top:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.landscape-card.not-detected{opacity:.35;background:var(--bg-primary)}
+
+/* ===== Radar Charts Row ===== */
+.radar-row{
+  display:grid;grid-template-columns:1fr 1fr;gap:24px;
+}
+@media(max-width:768px){.radar-row{grid-template-columns:1fr}}
+.radar-panel{
+  background:var(--bg-card);border:1px solid var(--border-color);
+  border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-sm);
+}
+.radar-panel h3{font-size:.95rem;margin-bottom:12px;text-align:center}
+
+/* ===== Score Grids ===== */
+.grid-row{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:768px){.grid-row{grid-template-columns:1fr}}
+.score-grid-panel{
+  background:var(--bg-card);border:1px solid var(--border-color);
+  border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-sm);
+}
+.score-grid-panel h3{font-size:.95rem;margin-bottom:12px}
+.score-grid-table{width:100%;border-collapse:collapse}
+.score-grid-table th{
+  text-align:left;font-size:.75rem;color:var(--text-muted);
+  padding:8px 4px;border-bottom:1px solid var(--border-color);
+  font-weight:600;letter-spacing:.05em;
+}
+.score-grid-table td{
+  padding:10px 4px;border-bottom:1px solid var(--border-color);
+  font-size:.85rem;
+}
+.score-grid-table td:first-child{font-weight:500}
+.score-grid-table td:last-child{text-align:right;font-weight:700}
+.status-pill{
+  display:inline-flex;align-items:center;gap:4px;padding:2px 10px;
+  border-radius:999px;font-size:.75rem;font-weight:600;
+  white-space:nowrap;
+}
+.status-pill.present{background:var(--green-bg);color:var(--green-text)}
+.status-pill.partial{background:var(--amber-bg);color:var(--amber-text)}
+.status-pill.missing{background:var(--red-bg);color:var(--red-text)}
+.score-bar-mini{
+  display:inline-block;width:60px;height:6px;background:var(--border-color);
+  border-radius:3px;overflow:hidden;vertical-align:middle;margin-right:6px;
+}
+.score-bar-mini-fill{height:100%;border-radius:3px}
+
+/* ===== Accordion ===== */
+.accordion{margin-top:8px}
+.accordion-item{border:1px solid var(--border-color);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden}
+.accordion-header{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;background:var(--bg-card);border:none;cursor:pointer;
+  font-size:.9rem;font-weight:500;color:var(--text-primary);
+  transition:background .15s;text-align:left;
+}
+.accordion-header:hover{background:var(--accent-light)}
+.accordion-header .left{display:flex;align-items:center;gap:10px}
+.accordion-header .arrow{transition:transform .2s;font-size:.7rem;color:var(--text-muted)}
+.accordion-header[aria-expanded="true"] .arrow{transform:rotate(90deg)}
+.accordion-panel{
+  max-height:0;overflow:hidden;transition:max-height .3s ease;
+}
+.accordion-panel-inner{padding:12px 16px 16px;border-top:1px solid var(--border-color)}
+.accordion-panel .evidence-item{
+  font-size:.8rem;padding:6px 0;border-bottom:1px dashed var(--border-color);
+  display:flex;gap:12px;align-items:flex-start;
+}
+.accordion-panel .evidence-item:last-child{border-bottom:none}
+.accordion-panel .evidence-file{color:var(--accent);font-family:monospace;font-size:.75rem;white-space:nowrap}
+.accordion-panel .evidence-snippet{
+  font-family:monospace;font-size:.75rem;color:var(--text-secondary);
+  background:var(--bg-primary);padding:2px 6px;border-radius:4px;
+}
+.accordion-panel .recommendation{
+  font-size:.8rem;color:var(--amber-text);margin-top:8px;
+  padding:8px 12px;background:var(--amber-bg);border-radius:6px;
+  border-left:3px solid var(--amber-border);
+}
+
+/* ===== Risk Summary ===== */
+.risk-table{width:100%;border-collapse:collapse;margin-top:8px}
+.risk-table th{
+  text-align:left;font-size:.75rem;color:var(--text-muted);
+  padding:10px 8px;border-bottom:1px solid var(--border-color);
+  font-weight:600;letter-spacing:.05em;
+}
+.risk-table td{padding:12px 8px;border-bottom:1px solid var(--border-color);font-size:.85rem}
+.risk-table .criticality{font-weight:700;font-size:.75rem;letter-spacing:.05em}
+.risk-table .criticality.high{color:var(--red-text)}
+.risk-table .criticality.medium{color:var(--amber-text)}
+.risk-table .criticality.low{color:var(--green-text)}
+
+/* ===== Footer ===== */
+.footer{
+  text-align:center;padding:32px 0 16px;
+  font-size:.75rem;color:var(--text-muted);
+  border-top:1px solid var(--border-color);margin-top:40px;
+}
+
+/* ===== Utility ===== */
+.muted{color:var(--text-muted);font-size:.8rem}
+.text-center{text-align:center}
+.mt-8{margin-top:8px}
+.mt-16{margin-top:16px}
+</style>
+</head>
+<body>
+
+<!-- 主题初始化：先于页面渲染执行，避免闪烁 -->
+<script>
+(function(){
+  var t=localStorage.getItem('dfx-theme');
+  if(t){document.documentElement.setAttribute('data-theme',t)}
+  else if(window.matchMedia('(prefers-color-scheme:dark)').matches){
+    document.documentElement.setAttribute('data-theme','dark')
+  }
+})();
+</script>
+
+<!-- ===== HEADER ===== -->
+<header class="header">
+<div class="header-inner">
+  <div class="header-left">
+    <h1 id="project-name">DFX 运维审视报告</h1>
+    <div class="meta">
+      <span id="meta-version"></span>
+      <span id="meta-files"></span>
+      <span id="meta-time"></span>
+      <span id="meta-duration"></span>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="theme-toggle" id="theme-toggle" aria-label="切换主题" title="切换明亮/暗黑主题">&#9788;</button>
+  </div>
+</div>
+</header>
+
+<div class="container">
+
+<!-- ===== 综合得分 ===== -->
+<div class="score-hero" id="score-hero"></div>
+
+<!-- ===== 业务领域图谱 ===== -->
+<h2 class="section-title">业务领域图谱</h2>
+<div class="landscape-grid" id="landscape-grid"></div>
+<p class="muted mt-8">灰色卡片表示该业务领域在代码中未检测到。</p>
+
+<!-- ===== 雷达图 ===== -->
+<h2 class="section-title">DFX 各维度总览</h2>
+<div class="radar-row">
+  <div class="radar-panel">
+    <h3>通用 DFX（13 维度）</h3>
+    <svg id="radar-generic" viewBox="0 0 300 300" style="width:100%;max-width:380px;display:block;margin:0 auto"></svg>
+  </div>
+  <div class="radar-panel">
+    <h3>业务 DFX（11 维度）</h3>
+    <svg id="radar-business" viewBox="0 0 300 300" style="width:100%;max-width:380px;display:block;margin:0 auto"></svg>
+  </div>
+</div>
+
+<!-- ===== 评分明细 ===== -->
+<h2 class="section-title">评分明细</h2>
+<div class="grid-row">
+  <div class="score-grid-panel">
+    <h3>通用 DFX</h3>
+    <table class="score-grid-table">
+      <thead><tr><th>维度</th><th>状态</th><th>得分</th></tr></thead>
+      <tbody id="grid-generic"></tbody>
+    </table>
+  </div>
+  <div class="score-grid-panel">
+    <h3>业务 DFX</h3>
+    <table class="score-grid-table">
+      <thead><tr><th>维度</th><th>状态</th><th>得分</th></tr></thead>
+      <tbody id="grid-business"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== 详细发现 ===== -->
+<h2 class="section-title">详细发现</h2>
+<div class="grid-row">
+  <div class="score-grid-panel">
+    <h3>通用 DFX 详情</h3>
+    <div class="accordion" id="accordion-generic"></div>
+  </div>
+  <div class="score-grid-panel">
+    <h3>业务 DFX 详情</h3>
+    <div class="accordion" id="accordion-business"></div>
+  </div>
+</div>
+
+<!-- ===== 风险汇总 ===== -->
+<h2 class="section-title">风险汇总</h2>
+<div class="score-grid-panel">
+  <table class="risk-table">
+    <thead><tr><th>风险等级</th><th>维度</th><th>状态</th><th>影响</th></tr></thead>
+    <tbody id="risk-table-body"></tbody>
+  </table>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<div class="footer">
+  由 DFX 运维审视 Skill 生成 &mdash; Claude Code<br>
+  扫描时间：<span id="footer-time"></span>
+</div>
+
+</div><!-- /container -->
+
+<!-- ===== 报告数据 ===== -->
+<script id="report-data" type="application/json">
+__REPORT_DATA__
+</script>
+
+<!-- ===== 渲染脚本 ===== -->
+<script>
+// ===== 数据加载 =====
+var R = JSON.parse(document.getElementById('report-data').textContent);
+
+// ===== 主题切换 =====
+(function(){
+  var btn=document.getElementById('theme-toggle');
+  function setIcon(){
+    var isDark=document.documentElement.getAttribute('data-theme')==='dark';
+    btn.innerHTML=isDark?'&#9789;':'&#9788;';
+  }
+  setIcon();
+  btn.addEventListener('click',function(){
+    var cur=document.documentElement.getAttribute('data-theme');
+    var next=cur==='dark'?'':'dark';
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('dfx-theme',next);
+    setIcon();
+    renderAll();
+  });
+})();
+
+// ===== 头部信息 =====
+(function(){
+  document.getElementById('project-name').textContent='DFX 审视：'+(R.projectName||'未知项目');
+  var mv=document.getElementById('meta-version');
+  mv.textContent='Spring Boot '+(R.springBootVersion||'未知');
+  if(R.springCloudVersion) mv.textContent+=' | Spring Cloud '+R.springCloudVersion;
+  document.getElementById('meta-files').textContent=(R.totalJavaFiles||0)+' 个 Java 文件';
+  document.getElementById('meta-time').textContent='扫描时间：'+(R.scanTimestamp||'');
+  document.getElementById('meta-duration').textContent='耗时：'+(R.scanDuration||'');
+  document.getElementById('footer-time').textContent=R.scanTimestamp||'';
+})();
+
+// ===== 综合得分仪表盘 =====
+function renderScoreHero(){
+  var overall=R.scores.overall||0;
+  var pct=Math.round(overall*100);
+  var color=pct>=80?'#22c55e':pct>=60?'#eab308':pct>=40?'#f97316':'#ef4444';
+
+  var rating=pct>=80?'优秀':pct>=60?'良好':pct>=40?'一般':pct>=20?'薄弱':'严重不足';
+
+  var svg='<svg viewBox="0 0 240 240" width="200" height="200"><defs>'+
+    '<linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">'+
+    '<stop offset="0%" stop-color="#ef4444"/>'+
+    '<stop offset="40%" stop-color="#eab308"/>'+
+    '<stop offset="80%" stop-color="#22c55e"/>'+
+    '</linearGradient></defs>';
+
+  var cx=120,cy=130,Rx=90,angleStart=-220,angleEnd=40;
+  // 背景弧
+  svg+=drawArc(cx,cy,Rx,'var(--border-color)',angleStart,angleEnd,12);
+
+  // 得分弧
+  var sweep=(angleEnd-angleStart)*(overall);
+  var scoreAngle=angleStart+sweep;
+  svg+=drawArc(cx,cy,Rx,color,angleStart,scoreAngle,12);
+
+  // 中心文字
+  svg+='<text x="120" y="110" text-anchor="middle" font-size="48" font-weight="800" fill="'+color+'">'+pct+'%</text>';
+  svg+='<text x="120" y="140" text-anchor="middle" font-size="14" fill="var(--text-secondary)">综合 DFX 评分</text>';
+  svg+='<text x="120" y="160" text-anchor="middle" font-size="12" fill="'+color+'">'+rating+'</text>';
+  svg+='</svg>';
+
+  var hero=document.getElementById('score-hero');
+  hero.innerHTML='<div class="gauge-container">'+svg+'</div>'+
+    '<div class="score-details">'+
+    scoreDetail('通用 DFX',R.scores.genericDFX,'generic')+
+    scoreDetail('业务 DFX',R.scores.businessDFX,'business')+
+    scoreDetail('领域覆盖度',R.scores.landscapeCoverage,'landscape')+
+    '</div>';
+}
+
+function drawArc(cx,cy,r,color,startAngle,endAngle,width){
+  var sr=startAngle*Math.PI/180,er=endAngle*Math.PI/180;
+  var x1=cx+r*Math.cos(sr),y1=cy+r*Math.sin(sr);
+  var x2=cx+r*Math.cos(er),y2=cy+r*Math.sin(er);
+  var large=er-sr>Math.PI?1:0;
+  var d='M '+x1+' '+y1+' A '+r+' '+r+' 0 '+large+' 1 '+x2+' '+y2;
+  return '<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="'+width+'" stroke-linecap="round"/>';
+}
+
+function scoreDetail(label,score,cls){
+  var pct=Math.round((score||0)*100);
+  return '<div class="score-item">'+
+    '<span class="label">'+label+'</span>'+
+    '<span class="bar-bg"><span class="bar-fill '+cls+'" style="width:'+pct+'%"></span></span>'+
+    '<span class="value">'+pct+'%</span></div>';
+}
+
+// ===== 业务领域图谱 =====
+function renderLandscape(){
+  var domains=R.businessDomains||[];
+  var grid=document.getElementById('landscape-grid');
+  grid.innerHTML=domains.map(function(d){
+    var cls=d.detected?'':'not-detected';
+    return '<div class="landscape-card '+cls+'">'+
+      '<div class="domain-name">'+(d.detected?'&#9679; ':'&#9675; ')+d.name+'</div>'+
+      '<div class="file-count">'+(d.detected?d.fileCount+' 个文件':'未检测到')+'</div>'+
+      (d.keyClasses&&d.keyClasses.length?'<div class="key-class">'+d.keyClasses.slice(0,3).join(', ')+'</div>':'')+
+      '</div>';
+  }).join('');
+}
+
+// ===== 雷达图 =====
+function renderRadar(svgId,dimensions,labelMap){
+  var svg=document.getElementById(svgId);
+  var cx=150,cy=150,r=120,N=dimensions.length;
+  var angleStep=2*Math.PI/N;
+  var startAngle=-Math.PI/2;
+
+  var html='';
+
+  // 网格环
+  for(var level=1;level<=5;level++){
+    var rr=r*level/5;
+    html+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rr+'" fill="none" stroke="var(--border-color)" stroke-width="0.5"/>';
+    html+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rr+'" fill="none" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="2,4" opacity="0.3"/>';
+  }
+
+  // 轴线
+  for(var i=0;i<N;i++){
+    var a=startAngle+i*angleStep;
+    var x=cx+r*Math.cos(a),y=cy+r*Math.sin(a);
+    html+='<line x1="'+cx+'" y1="'+cy+'" x2="'+x+'" y2="'+y+'" stroke="var(--border-color)" stroke-width="0.5"/>';
+  }
+
+  // 数据多边形
+  var dataPts=[];
+  for(var i=0;i<N;i++){
+    var d=dimensions[i];
+    var score=d?d.score:0;
+    var a=startAngle+i*angleStep;
+    var dist=r*score;
+    var x=cx+dist*Math.cos(a),y=cy+dist*Math.sin(a);
+    dataPts.push(x+','+y);
+  }
+  if(dataPts.length){
+    html+='<polygon points="'+dataPts.join(' ')+'" fill="var(--chart-fill)" stroke="var(--chart-stroke)" stroke-width="2"/>';
+    for(var i=0;i<N;i++){
+      var p=dataPts[i].split(',');
+      html+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3" fill="var(--chart-stroke)"/>';
+    }
+  }
+
+  // 标签
+  for(var i=0;i<N;i++){
+    var a=startAngle+i*angleStep;
+    var lr=r+24;
+    var lx=cx+lr*Math.cos(a),ly=cy+lr*Math.sin(a);
+    var name=labelMap[i]||(dimensions[i]?dimensions[i].name:'');
+    if(name.length>8) name=name.substring(0,7)+'..';
+    var anchor='middle';
+    if(Math.cos(a)>0.1) anchor='start';
+    else if(Math.cos(a)<-0.1) anchor='end';
+    html+='<text x="'+lx+'" y="'+ly+'" text-anchor="'+anchor+'" dominant-baseline="middle" font-size="10" fill="var(--text-secondary)">'+escHtml(name)+'</text>';
+  }
+
+  svg.innerHTML=html;
+}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// ===== 评分明细表 =====
+function renderScoreGrid(tbodyId,dimensions){
+  var tbody=document.getElementById(tbodyId);
+  var statusLabels={present:'已具备',partial:'部分具备',missing:'缺失'};
+  tbody.innerHTML=dimensions.map(function(d){
+    var pct=Math.round((d.score||0)*100);
+    var fillColor=pct>=80?'var(--green-text)':pct>=40?'var(--amber-text)':'var(--red-text)';
+    return '<tr>'+
+      '<td>'+escHtml(d.name)+'</td>'+
+      '<td><span class="status-pill '+d.status+'">'+ (statusLabels[d.status]||d.status) +'</span></td>'+
+      '<td><span class="score-bar-mini"><span class="score-bar-mini-fill" style="width:'+pct+'%;background:'+fillColor+'"></span></span>'+pct+'%</td>'+
+      '</tr>';
+  }).join('');
+}
+
+// ===== 手风琴详情 =====
+function renderAccordion(containerId,dimensions){
+  var container=document.getElementById(containerId);
+  var statusLabels={present:'已具备',partial:'部分具备',missing:'缺失'};
+  var html='';
+  dimensions.forEach(function(d,idx){
+    html+='<div class="accordion-item">'+
+      '<button class="accordion-header" aria-expanded="false" aria-controls="acc-panel-'+containerId+'-'+idx+'" onclick="toggleAccordion(this)">'+
+      '<span class="left"><span class="arrow">&#9654;</span> '+escHtml(d.name)+' <span class="status-pill '+d.status+'">'+
+        (statusLabels[d.status]||d.status)+
+      '</span></span>'+
+      '<span class="muted">'+(d.evidence?d.evidence.length:0)+' 条证据</span>'+
+      '</button>'+
+      '<div class="accordion-panel" id="acc-panel-'+containerId+'-'+idx+'">'+
+      '<div class="accordion-panel-inner">';
+    if(d.summary){
+      html+='<div style="font-size:.82rem;margin-bottom:8px">'+escHtml(d.summary)+'</div>';
+    }
+    if(d.evidence&&d.evidence.length){
+      d.evidence.forEach(function(e){
+        html+='<div class="evidence-item"><span class="evidence-file">'+escHtml(e.file||'')+'</span> <span class="evidence-snippet">'+escHtml(e.snippet||'')+'</span></div>';
+      });
+    }else{
+      html+='<div class="muted">未找到相关代码证据。</div>';
+    }
+    if(d.recommendations&&d.recommendations.length){
+      d.recommendations.forEach(function(r){
+        html+='<div class="recommendation">&#128161; '+escHtml(r)+'</div>';
+      });
+    }
+    html+='</div></div></div>';
+  });
+  container.innerHTML=html;
+}
+
+function toggleAccordion(btn){
+  var expanded=btn.getAttribute('aria-expanded')==='true';
+  btn.setAttribute('aria-expanded',!expanded);
+  var panel=document.getElementById(btn.getAttribute('aria-controls'));
+  if(panel){
+    panel.style.maxHeight=expanded?'0':panel.scrollHeight+'px';
+  }
+}
+
+// ===== 风险汇总 =====
+function renderRiskSummary(){
+  var allDims=[];
+  (R.genericDFX||[]).forEach(function(d){d.category='通用 DFX';allDims.push(d)});
+  (R.businessDFX||[]).forEach(function(d){d.category='业务 DFX';allDims.push(d)});
+
+  // 风险等级映射
+  var critMap={
+    '2.5':'高','2.7':'中','2.6':'中','2.3':'中','2.9':'中','2.13':'中',
+    '3.4':'高','3.5':'高','3.3':'高','3.2':'高','3.1':'高',
+    '3.10':'中','3.8':'中',
+    '2.1':'低','2.2':'低','2.4':'低','2.8':'低','2.10':'低','2.11':'低','2.12':'低',
+    '3.6':'低','3.7':'低','3.9':'低','3.11':'低'
+  };
+  var critLabels={高:'&#128308; 高',中:'&#128993; 中',低:'&#128994; 低'};
+  var statusLabels={present:'已具备',partial:'部分具备',missing:'缺失'};
+
+  // 排序：缺失优先，再按风险等级
+  var order={missing:0,partial:1,present:2};
+  var critOrder={高:0,中:1,低:2};
+  allDims.sort(function(a,b){
+    var ca=critMap[a.id]||'低',cb=critMap[b.id]||'低';
+    var oa=order[a.status]||2,ob=order[b.status]||2;
+    if(a.status!==b.status) return oa-ob;
+    if(ca!==cb) return critOrder[ca]-critOrder[cb];
+    return a.name.localeCompare(b.name);
+  });
+
+  // 仅显示非已具备项
+  allDims=allDims.filter(function(d){return d.status!=='present'});
+  if(!allDims.length){
+    document.getElementById('risk-table-body').innerHTML=
+      '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--green-text)">所有维度已具备，未发现风险项。</td></tr>';
+    return;
+  }
+
+  var impacts={
+    '3.4':'跨服务数据一致性无法保证',
+    '3.5':'高并发场景下系统崩溃风险',
+    '3.3':'支付重复或丢失',
+    '3.2':'超卖或库存泄漏',
+    '3.1':'订单重复提交',
+    '2.5':'级联故障导致全链路不可用',
+    '2.7':'瞬态故障变为持久失败',
+    '2.6':'脏数据与数据库压力',
+    '3.10':'降级场景下请求挂起',
+    '2.3':'生产环境无可观测性',
+    '2.9':'线程池耗尽',
+    '2.13':'接口滥用与未授权访问',
+    '3.8':'业务异常发现延迟',
+    '2.1':'生产问题无法排查',
+    '2.2':'错误响应不一致',
+    '2.4':'K8s 无法检测不健康 Pod',
+    '2.8':'无法跨服务关联请求',
+    '2.10':'配置变更需重启',
+    '2.11':'API 变更破坏下游消费者',
+    '2.12':'部署时在途请求丢失',
+    '3.6':'订单卡在中间状态',
+    '3.7':'单一服务商依赖',
+    '3.9':'无法分析转化流失',
+    '3.11':'系统间数据漂移无法发现'
+  };
+
+  document.getElementById('risk-table-body').innerHTML=allDims.slice(0,15).map(function(d){
+    var crit=critMap[d.id]||'低';
+    return '<tr>'+
+      '<td><span class="criticality '+(crit==='高'?'high':crit==='中'?'medium':'low')+'">'+(critLabels[crit]||crit)+'</span></td>'+
+      '<td>'+escHtml(d.name)+' <span class="muted">('+d.id+')</span></td>'+
+      '<td><span class="status-pill '+d.status+'">'+(statusLabels[d.status]||d.status)+'</span></td>'+
+      '<td class="muted">'+ (impacts[d.id]||'存在生产风险') +'</td>'+
+      '</tr>';
+  }).join('');
+}
+
+// ===== 渲染全部 =====
+function renderAll(){
+  renderScoreHero();
+  renderLandscape();
+
+  // 雷达图中文标签
+  var genericLabels=[
+    '日志诊断','异常处理','指标监控','健康检查','熔断限流',
+    '缓存','重试','链路追踪','异步线程','配置管理',
+    'API版本','优雅关闭','安全DFX'
+  ];
+  var businessLabels=[
+    '订单幂等','库存锁','支付事务','分布式事务','秒杀防护',
+    '状态机','第三方降级','业务告警','漏斗追踪','超时管理',
+    '数据对账'
+  ];
+  renderRadar('radar-generic',R.genericDFX||[],genericLabels);
+  renderRadar('radar-business',R.businessDFX||[],businessLabels);
+
+  renderScoreGrid('grid-generic',R.genericDFX||[]);
+  renderScoreGrid('grid-business',R.businessDFX||[]);
+  renderAccordion('accordion-generic',R.genericDFX||[]);
+  renderAccordion('accordion-business',R.businessDFX||[]);
+  renderRiskSummary();
+}
+
+renderAll();
+</script>
+
+</body>
+</html>
