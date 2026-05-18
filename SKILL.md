@@ -49,22 +49,11 @@ springBootVersion、springCloudVersion、mainClass（主类）、packageRoots（
 
 ### 阶段二：业务领域检测
 
-对以下 12 个电商业务领域，分别 Grep 类名模式（`--include="*.java"`，排除 `target/` 和 `build/` 目录）：
+1. **读取** `references/domains.json` 获取业务领域列表。该文件定义了所有待检测的电商领域及其 Grep 模式。
+2. 对 JSON 中每个领域，执行 Grep（`--include="*.java"`，排除 `target/` 和 `build/` 目录），使用其 `grep` 字段作为搜索模式。
+3. 若 JSON 文件不存在，使用以下默认列表：
 
-| 业务领域 | Grep 模式 |
-|---------|----------|
-| 订单处理 | `class.*Order` |
-| 支付/账单 | `class.*Payment\|class.*Transaction\|class.*Refund` |
-| 库存管理 | `class.*Inventor\|class.*Stock\|class.*Sku\|class.*Warehouse` |
-| 购物车/结算 | `class.*Cart\|class.*Checkout\|class.*Basket` |
-| 用户/账户 | `class.*User\|class.*Account\|class.*Customer\|class.*Auth` |
-| 商品/目录 | `class.*Product\|class.*Catalog\|class.*Category` |
-| 促销/优惠券 | `class.*Coupon\|class.*Promotion\|class.*Discount` |
-| 物流/配送 | `class.*Shipping\|class.*Logistics\|class.*Delivery\|class.*Fulfill` |
-| 消息通知 | `class.*Notification\|class.*Notif\|class.*Email.*Service\|class.*Sms` |
-| 秒杀/抢购 | `class.*Flash\|class.*Seckill\|class.*Spike\|class.*Burst` |
-| 评价/评分 | `class.*Review\|class.*Rating\|class.*Feedback` |
-| 管理后台 | `class.*Admin\|class.*Dashboard\|class.*Ops` |
+> **如何新增业务领域**：编辑 `references/domains.json`，在 `domains` 数组中添加新条目即可。格式：`{ "name": "领域中文名", "grep": "正则模式" }`。无需修改任何其他文件。
 
 对每个领域：
 - 统计匹配文件数；提取最多 5 个类名
@@ -241,7 +230,7 @@ springBootVersion、springCloudVersion、mainClass（主类）、packageRoots（
 ```
 通用DFX得分 = 通用DFX各维度得分之和 / 13
 业务DFX得分 = 业务DFX各维度得分之和 / 11
-领域覆盖度 = 检测到的业务领域数 / 12
+领域覆盖度 = 检测到的业务领域数 / domains.json 中配置的领域总数
 综合得分 = 通用DFX × 0.40 + 业务DFX × 0.40 + 领域覆盖度 × 0.20
 ```
 

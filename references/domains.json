@@ -1,0 +1,17 @@
+{
+  "description": "电商业务领域配置。如需新增领域，在此文件中添加条目即可，无需修改其他文件。每个条目包含领域中文名和对应的 Grep 搜索模式。",
+  "domains": [
+    { "name": "订单处理", "grep": "class.*Order" },
+    { "name": "支付/账单", "grep": "class.*Payment|class.*Transaction|class.*Refund" },
+    { "name": "库存管理", "grep": "class.*Inventor|class.*Stock|class.*Sku|class.*Warehouse" },
+    { "name": "购物车/结算", "grep": "class.*Cart|class.*Checkout|class.*Basket" },
+    { "name": "用户/账户", "grep": "class.*User|class.*Account|class.*Customer|class.*Auth" },
+    { "name": "商品/目录", "grep": "class.*Product|class.*Catalog|class.*Category" },
+    { "name": "促销/优惠券", "grep": "class.*Coupon|class.*Promotion|class.*Discount" },
+    { "name": "物流/配送", "grep": "class.*Shipping|class.*Logistics|class.*Delivery|class.*Fulfill" },
+    { "name": "消息通知", "grep": "class.*Notification|class.*Notif|class.*Email.*Service|class.*Sms" },
+    { "name": "秒杀/抢购", "grep": "class.*Flash|class.*Seckill|class.*Spike|class.*Burst" },
+    { "name": "评价/评分", "grep": "class.*Review|class.*Rating|class.*Feedback" },
+    { "name": "管理后台", "grep": "class.*Admin|class.*Dashboard|class.*Ops" }
+  ]
+}
