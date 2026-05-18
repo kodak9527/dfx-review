@@ -24,14 +24,16 @@
 
 ## 二、通用 DFX 能力（13 维度）
 
+> **扫描方式**：不再依赖关键词 grep。读取每个 Java 文件时，逐文件检查以下代码信号。信号在 3+ 个关键文件（Service/Controller/Config）中出现视为"已具备"，1-2 个视为"部分具备"，完全未出现视为"缺失"。
+
 ### 2.1 日志与诊断
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
-| `LoggerFactory\.getLogger` 或 `@Slf4j` | SLF4J 在 Service 类中的使用 |
-| `MDC\.put\(` 或 `MDC\.clear\(` | 上下文日志（traceId/orderId）|
-| `logback-spring\.xml` 或 `logstash` | 结构化/JSON 日志配置 |
-| `@ToString\.Exclude` 或 `@JsonIgnore`（password, phone 等字段）| 日志敏感数据脱敏 |
+| 文件顶部有 `@Slf4j` 或手动声明的 Logger | SLF4J 日志框架使用 |
+| 方法体内有 `MDC.put("traceId", ...)` 调用 | 上下文日志（traceId/orderId）|
+| `logback-spring.xml` 中配置了 JSON encoder | 结构化/JSON 日志输出 |
+| 实体/DTO 字段上有 `@ToString.Exclude` 或用 `@JsonIgnore` 标注了敏感字段 | 日志/序列化时敏感数据脱敏 |
 
 - **已具备**：>50% 的 Service 使用 SLF4J/Lombok，MDC 已配置，JSON 编码器，敏感字段已排除
 - **部分具备**：使用了 SLF4J 但无 MDC，或无 JSON 日志，或使用不一致
@@ -39,12 +41,12 @@
 
 ### 2.2 异常处理
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
-| `@ControllerAdvice` 或 `@RestControllerAdvice` | 全局异常处理器 |
-| `@ExceptionHandler\(` | 异常到响应的映射 |
-| 异常包下的 `extends RuntimeException` | 业务异常体系 |
-| `ErrorResponse` 或 `ApiError` 或 `ErrorResult` | 统一错误响应结构 |
+| 存在带 `@RestControllerAdvice` 注解的类 | 全局异常处理器 |
+| Controller/Advice 中有 `@ExceptionHandler` 方法 | 异常到响应的映射 |
+| 定义了分级业务异常类（继承自 RuntimeException） | 业务异常体系 |
+| 定义了统一的 ErrorResponse/ApiError 响应 DTO | 统一错误响应结构 |
 
 - **已具备**：全局 `@RestControllerAdvice`，分级异常体系，统一错误响应 DTO
 - **部分具备**：有处理器但异常结构扁平或错误格式不一致
@@ -52,12 +54,11 @@
 
 ### 2.3 指标监控
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
-| `import io\.micrometer` | Micrometer 依赖 |
-| `@Timed\(` | 方法级耗时打点 |
-| `Counter\.builder\(` 或 `meterRegistry\.counter\(` | 自定义业务计数器 |
-| `MeterBinder` | 自定义指标注册 Bean |
+| 文件 `import io.micrometer` 或方法的 `@Timed` 注解 | Micrometer 指标框架使用 |
+| 代码中创建了 `Counter`/`Gauge`/`Timer` 类型的变量 | 自定义业务指标 |
+| 有实现 `MeterBinder` 接口的 Bean | 系统级指标注册 |
 
 - **已具备**：核心 Service 有 `@Timed`，自定义计数器，MeterBinder Bean
 - **部分具备**：有 Micrometer 但仅自动配置的 JVM 指标
@@ -65,7 +66,7 @@
 
 ### 2.4 健康检查
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | `HealthIndicator` 或 `AbstractHealthIndicator` | 自定义健康指示器 |
 | `livenessState` 或 `readinessState` | K8s 探针支持 |
@@ -77,7 +78,7 @@
 
 ### 2.5 熔断与韧性
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | `@CircuitBreaker\(` | Resilience4j 熔断 |
 | `@Bulkhead\(` | 舱壁隔离 |
@@ -93,7 +94,7 @@
 
 ### 2.6 缓存
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | `@Cacheable\(` | 读穿透缓存 |
 | `@CacheEvict\(` | 缓存淘汰 |
@@ -108,7 +109,7 @@
 
 ### 2.7 重试（框架级）
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | `@Retryable\(` | Spring Retry 注解 |
 | `@Recover` | 重试耗尽后的恢复方法 |
@@ -121,7 +122,7 @@
 
 ### 2.8 链路追踪
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | `import io\.opentelemetry` | OpenTelemetry SDK |
 | `@WithSpan\(` 或 `@SpanTag\(` 或 `@NewSpan\(` | 自定义 Span 注解 |
@@ -134,7 +135,7 @@
 
 ### 2.9 线程池与异步
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | `@Async\(` | 异步方法 |
 | `@EnableAsync` | 异步开关 |
@@ -148,7 +149,7 @@
 
 ### 2.10 配置管理
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | `@ConfigurationProperties\(` | 类型化配置 |
 | `@RefreshScope` | 动态配置刷新 |
@@ -162,7 +163,7 @@
 
 ### 2.11 API 版本化
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | `@RequestMapping` 中的 `/v[0-9]+/` | URL 路径版本化 |
 | `X-API-Version` 或 `Accept-Version` 请求头 | 请求头版本化 |
@@ -175,7 +176,7 @@
 
 ### 2.12 优雅关闭
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | `server\.shutdown\s*[=:]\s*graceful` | 优雅关闭开关 |
 | `spring\.lifecycle\.timeout-per-shutdown-phase` | 关闭超时 |
@@ -187,7 +188,7 @@
 
 ### 2.13 安全 DFX
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | `RateLimiter` 或 `RateLimit` 过滤器 | API 限流 |
 | `@Async` 中的 `SecurityContextHolder` 传递 | 异步上下文传递 |
@@ -204,7 +205,7 @@
 
 ### 3.1 订单幂等性
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | 类/方法/参数名中的 `[Ii]dempoten` | 幂等概念 |
 | `X-Idempotency-Key` 或 `requestId` | 客户端幂等键 |
@@ -217,7 +218,7 @@
 
 ### 3.2 库存锁定与释放
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | `SELECT.*FOR UPDATE` 或 `@Lock\(` | 悲观锁 |
 | `Redisson` 或 `RedisLock` 或 `distributed.*lock` | 分布式锁 |
@@ -230,7 +231,7 @@
 
 ### 3.3 支付事务模式
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | 支付状态枚举含状态转换 | 支付状态机 |
 | `outTradeNo` 或 `transactionId` 去重 | 支付幂等 |
@@ -243,7 +244,7 @@
 
 ### 3.4 分布式事务
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | `@GlobalTransactional` 或 `io\.seata` | Seata 分布式事务 |
 | `@Saga` 或 Saga 编排器类 | Saga 模式 |
@@ -257,7 +258,7 @@
 
 ### 3.5 秒杀/高并发防护
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | Redis 库存预加载模式 | 秒杀库存预热 |
 | 订单请求的 MQ 队列 | 请求排队/背压 |
@@ -270,7 +271,7 @@
 
 ### 3.6 状态机监控
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | `StateMachine` 或 `squirrel-foundation` 或 `stateless4j` | 状态机库 |
 | 状态枚举含正式转换校验 | 结构化状态转换 |
@@ -283,7 +284,7 @@
 
 ### 3.7 第三方服务降级
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | 外部服务的 `interface.*Client` 或 `interface.*Gateway` | 外部服务抽象 |
 | 每个外部服务调用上的 `@CircuitBreaker` | 每服务独立熔断 |
@@ -296,7 +297,7 @@
 
 ### 3.8 业务告警指标
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | 含业务事件名的 `Counter\.builder\(` | 业务 KPI 计数器 |
 | 指标名或配置中的 `alert` 前缀 | 告警阈值配置 |
@@ -309,7 +310,7 @@
 
 ### 3.9 用户旅程/漏斗追踪
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | `AnalyticsEvent` 或 `FunnelEvent` 或 `UserActionEvent` | 结构化分析事件 |
 | 在转化节点（浏览、加购、结算、支付）发布事件 | 漏斗各步骤事件 |
@@ -321,7 +322,7 @@
 
 ### 3.10 超时管理
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | `@Transactional\(timeout` 按操作区分 | 按操作 DB 超时 |
 | `RestTemplate` 或 `WebClient` 超时配置 | HTTP 客户端超时 |
@@ -334,7 +335,7 @@
 
 ### 3.11 数据一致性对账
 
-| 搜索模式 | 检查内容 |
+| 代码信号 | 说明 |
 |---------|---------|
 | `@Scheduled` 对账/比对任务 | 定时对账 |
 | 类名中的 `reconcil` 或 `settlement` 或 `consistency.*check` | 对账逻辑 |

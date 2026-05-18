@@ -1,340 +1,208 @@
 ---
 name: dfx-review
-description: 扫描 Java/Spring 电商后端代码，识别 DFX（Design for eXcellence）设计模式。
-  梳理业务逻辑，检查通用 DFX 能力（日志、指标、熔断、健康检查、缓存、链路追踪等）和
-  业务 DFX 能力（幂等、库存锁、Saga、秒杀防护等）。生成自包含的仪表盘 HTML 报告。
+description: 扫描 Java/Spring 电商微服务后端代码仓库，全量读取代码文件，识别 DFX（Design for eXcellence）
+  设计模式。自动发现所有微服务，逐个扫描业务逻辑和 DFX 能力，生成多服务对比 Dashboard HTML 报告。
   当用户提到"DFX审视""运维审视""DFX扫描""运维检查""生产就绪评估"时使用此 skill。
 ---
 
-# DFX 运维审视 Skill
+# DFX 运维审视 Skill v2
 
-扫描 Java/Spring 电商代码仓库，梳理业务逻辑，识别通用和业务 DFX 设计模式，
-生成 Dashboard 风格的可视化 HTML 报告。
+扫描 Java/Spring 微服务群，全量读取代码，从文件内容（而非关键词匹配）推断 DFX 设计模式。
+支持多服务并行扫描、跨服务对比、单服务详情。生成 Dashboard HTML 报告。
 
 ## 适用场景
 
 用户说"做 DFX 审视""扫描 DFX""生成 DFX 报告""运维设计审视""检查生产就绪度"时触发。
-适用于 Spring Boot / Spring Cloud 项目。
+支持 Spring Boot / Spring Cloud 多模块或多仓库微服务项目。
 
 ## 前置条件
 
-- 当前工作目录应为 Java/Spring 项目根目录
-- 仅使用 Claude Code 内置工具（Glob、Grep、Read、Write），无需安装额外依赖
-
-## 工作流程
-
-按顺序执行以下七个阶段。每个阶段开始时向用户报告进度。
+- 当前工作目录应为 Java/Spring 项目的根目录（或微服务群的父目录）
+- 仅使用 Claude Code 内置工具（Glob、Grep、Read、Write、Bash）
+- 不需要外部依赖
 
 ---
 
-### 阶段一：项目发现
+## 工作流程（5 个阶段）
 
-1. Glob 查找构建文件：`pom.xml`、`build.gradle`、`build.gradle.kts`
-2. 如果找到，读取构建文件并提取：
-   - 从 `<artifactId>` 或 `rootProject.name` 获取项目名
-   - 从 `<parent>` 或依赖版本获取 Spring Boot 版本
-   - 如有 `spring-cloud-dependencies` BOM，获取 Spring Cloud 版本
-3. 如果没有构建文件：使用当前目录名作为项目名，标注"构建系统未知"
-4. Glob 查找 `**/*.java` 统计 Java 源文件总数
-5. Grep 查找 `@SpringBootApplication` 定位主应用类
-6. Bash：`find src/main/java -type d | head -30` 列出包结构
+---
 
-收集以下元数据字段：
+### 阶段一：服务发现
+
+识别当前目录下有哪些微服务。
+
+1. **读取构建文件**：Glob 查找 `pom.xml`、`settings.gradle`。
+2. **检测多模块**：
+   - 若 `pom.xml` 含 `<modules>`，则每个 module 视为一个候选服务
+   - 若 `settings.gradle` 含 `include`，同理
+   - 若没有多模块标识，则检查根目录下是否有子目录含独立 `pom.xml` 或 `build.gradle`
+3. **验证服务**：对每个候选，确认存在 `src/main/java` 目录和至少一个 Java 文件。若找到 `@SpringBootApplication` 标注的类，确认为 Spring Boot 服务。
+4. **单服务退化**：若仅发现一个服务，后续阶段仅扫描该服务，报告仅展示单服务视图。
+5. **收集元数据**：对每个服务收集：
+   ```
+   name（模块名/目录名）、totalJavaFiles、springBootVersion、buildSystem
+   ```
+   输出形如 `serviceList[]`。
+
+---
+
+### 阶段二：逐服务全量扫描
+
+对 `serviceList` 中每个服务，执行以下子步骤。**从代码文件实际内容分析 DFX，而非 grep 模式匹配。**
+
+#### 子步骤 2.1：列出文件清单
+
+Glob 找出该服务 `src/main/java` 下所有 `.java` 文件。
+
+**文件优先级分组**：
+
+| 优先级 | 文件类型 | Glob 模式 | 说明 |
+|--------|---------|----------|------|
+| **P0 必读** | Service/Controller/Config | `**/*Service*.java` `**/*Controller*.java` `**/*Config*.java` `**/*Configuration*.java` | DFX 信号最密集 |
+| **P0 必读** | Aspect/Interceptor/Filter/Listener | `**/aspect/**` `**/interceptor/**` `**/filter/**` `**/listener/**` | 切面、拦截、过滤逻辑含大量 DFX |
+| **P0 必读** | 配置文件 | `**/application*.yml` `**/application*.properties` `**/bootstrap*.yml` `**/logback*.xml` `**/log4j*.xml` `pom.xml` `build.gradle` | 配置层 DFX |
+| **P1 选读** | Repository/Mapper | `**/*Repository*.java` `**/*Mapper*.java` `**/*Dao*.java` | 数据访问的异常/超时/缓存 |
+| **P1 选读** | Handler/Processor | `**/*Handler*.java` `**/*Processor*.java` `**/*Consumer*.java` `**/*Producer*.java` | 事件/MQ 处理逻辑 |
+| **P2 可跳过** | Entity/DTO/VO/Enum | `**/entity/**` `**/dto/**` `**/vo/**` `**/enums/**` `**/model/**` `**/domain/**` | 纯数据，DFX 信号极少 |
+| **P2 可跳过** | Test | `**/*Test*.java` `**/*Tests*.java` | 测试代码不纳入 |
+
+#### 子步骤 2.2：分批读取与分析
+
+按优先级从高到低分批 Read。每批 5-8 个文件。读取时逐文件分析，**从文件实际内容中提取 DFX 信号**。
+
+分析时参考 `references/analysis-framework.md` 中列出的代码信号清单。概括如下：
+
+**每读一个文件，问自己 5 个问题**：
+
+1. **这个文件有日志吗？** — 找 `log.` 调用、Logger 声明、是否有细分的级别（debug/info/warn/error）
+2. **这个文件处理异常了吗？** — try/catch/finally 是否完善、是否抛出自定义业务异常、是否有兜底逻辑
+3. **这个文件做了什么防护？** — 熔断/限流/重试/降级/超时/幂等/锁的任何痕迹
+4. **这个文件有可观测性吗？** — 计数器/耗时打点/链路追踪/健康检查的任何痕迹
+5. **这个文件用到了什么框架能力？** — 缓存/异步/配置管理/状态机/事件发布
+
+记录时格式：
 ```
-projectName（项目名）、totalJavaFiles（文件总数）、buildSystem（Maven/Gradle/Unknown）、
-springBootVersion、springCloudVersion、mainClass（主类）、packageRoots（包路径列表）
-```
-
----
-
-### 阶段二：业务领域发现（代码驱动）
-
-不从预定义清单对答案，而是从代码实际的包结构出发，自动发现业务领域。
-
-1. **读取** `references/domains.json`，获取 `vocabulary`（关键词 → 中文标签映射）和 `excludePaths`（需过滤的技术包名列表）。
-
-2. **扫描包结构**：Bash 运行 `find src/main/java -type d`，列出所有包目录路径。
-
-3. **过滤技术包**：排除 `excludePaths` 中列出的通用包名（如 common、util、config、model、dto 等），以及包含 `target/`、`build/`、`test/` 的路径。剩余的目录即为"候选业务包"。
-
-4. **提取业务关键词**：从每个候选业务包的路径中提取"业务关键词"。取路径中过滤后的包名片段，例如：
-   - `com/example/order/service` → 关键词 `order`
-   - `com/example/payment/gateway` → 关键词 `payment`
-   - `com/example/user/controller` → 关键词 `user`
-
-5. **映射中文标签**：用 `vocabulary` 将每个英文关键词映射为中文业务领域名。未匹配到的关键词保留英文原名（如 `livestream` → `livestream`，待日后补充 vocabulary）。
-
-6. **去重合并**：多个关键词映射到同一中文标签时自动合并为一个领域（如 `inventory` + `stock` + `warehouse` → 都归入"库存管理"）。
-
-7. **验证 & 统计**：对每个发现的业务领域，Grep 确认其包下是否包含 Service/Controller/Repository 类，统计文件数和关键类名（最多 5 个）。
-
-8. **输出**：生成 `businessDomains[]` 数组，每个条目含 `name`（中文标签）、`detected: true`、`fileCount`、`keyClasses`。未被 vocabulary 覆盖的领域也会正常输出，只是标签为英文原名。
-
-> **如何扩展词汇表**：编辑 `references/domains.json`，在 `vocabulary` 中添加 `"新关键词": "中文标签"` 即可。无需修改其他文件。`excludePaths` 可视项目结构调整。
-
----
-
-### 阶段三：通用 DFX 扫描（13 个维度）
-
-对以下每个维度执行指定的 Grep 命令。参照 `references/analysis-framework.md` 中的标准，
-将发现分类为"已具备"/"部分具备"/"缺失"。每个维度收集最多 5 条证据，
-包含文件路径和代码片段。
-
-**2.1 日志与诊断**
-- Grep: `LoggerFactory\.getLogger|@Slf4j` — SLF4J 使用情况
-- Grep: `MDC\.put\(|MDC\.clear\(` — 上下文日志（traceId/orderId）
-- Grep: `logback-spring\.xml|logstash` — JSON 编码器配置
-- Grep: `@ToString\.Exclude|@JsonIgnore.*password|@JsonIgnore.*phone` — 敏感数据脱敏
-
-**2.2 异常处理**
-- Grep: `@ControllerAdvice|@RestControllerAdvice` — 全局异常处理器
-- Grep: `@ExceptionHandler\(` — 异常处理方法
-- Grep: `extends RuntimeException` — 业务异常体系
-- Grep: `ErrorResponse|ApiError|ErrorResult` — 统一错误响应结构
-
-**2.3 指标监控**
-- Grep: `import io\.micrometer` — Micrometer 依赖
-- Grep: `@Timed\(` — 方法级耗时打点
-- Grep: `Counter\.builder\(|meterRegistry\.counter\(` — 自定义业务计数器
-- Grep: `MeterBinder` — 自定义指标注册
-
-**2.4 健康检查**
-- Grep: `HealthIndicator` — 自定义健康指示器
-- Grep: `livenessState|readinessState` — K8s 探针支持
-- Grep: `management\.endpoint\.health` — 健康端点配置
-
-**2.5 熔断与韧性**
-- Grep: `@CircuitBreaker\(|@Bulkhead\(|@RateLimiter\(|@TimeLimiter\(` — Resilience4j 注解
-- Grep: `fallbackMethod` — 降级方法
-- Grep: `import io\.github\.resilience4j|import com\.alibaba\.csp\.sentinel` — 韧性库依赖
-
-**2.6 缓存**
-- Grep: `@Cacheable\(|@CacheEvict\(|@CachePut\(` — 缓存注解
-- Grep: `@EnableCaching` — 缓存开关
-- Grep: `CacheManager|RedisCacheManager` — 缓存配置
-- Grep: `spring\.cache` — 缓存 TTL 配置
-
-**2.7 重试**
-- Grep: `@Retryable\(` — 重试注解
-- Grep: `@Recover` — 恢复方法
-- Grep: `import org\.springframework\.retry` — Spring Retry 依赖
-
-**2.8 链路追踪**
-- Grep: `import io\.opentelemetry|brave\.Tracer|spring-cloud-starter-sleuth` — 追踪 SDK
-- Grep: `@WithSpan\(|@SpanTag\(|@NewSpan\(` — Span 注解
-- Grep: `tracer\.nextSpan|tracer\.currentSpan` — 编程式 Span
-
-**2.9 线程池与异步**
-- Grep: `@Async\(` — 异步方法
-- Grep: `ThreadPoolTaskExecutor` — 自定义线程池
-- Grep: `RejectedExecutionHandler|setRejectedExecutionHandler` — 拒绝策略
-
-**2.10 配置管理**
-- Grep: `@ConfigurationProperties\(` — 类型化配置
-- Grep: `@RefreshScope` — 动态刷新
-- Grep: `@Validated.*ConfigurationProperties|ConfigurationProperties.*@Validated` — 配置校验
-- Grep: `@ConditionalOnProperty\(` — 特性开关
-
-**2.11 API 版本化**
-- Grep: `/v[0-9]+/` — URL 路径版本
-- Grep: `@Deprecated` — 废弃 API 标记
-- Grep: `@JsonIgnoreProperties\(ignoreUnknown\s*=\s*true\)` — 向下兼容
-
-**2.12 优雅关闭**
-- Grep: `server\.shutdown\s*[=:]\s*graceful` — 优雅关闭配置
-- Grep: `@PreDestroy` — 清理钩子
-
-**2.13 安全 DFX**
-- Grep: `RateLimiter|RateLimit.*Filter|rate.*limit` — 接口限流
-- Grep: `MODE_INHERITABLETHREADLOCAL|DelegatingSecurityContext` — 认证上下文传递
-- Grep: `CorsConfigurationSource|@CrossOrigin` — CORS 配置
-
-对每个搜索返回结果：记录文件路径、出现次数、判断应用一致性。
-
----
-
-### 阶段四：业务 DFX 扫描（11 个维度）
-
-**3.1 订单幂等性**
-- Grep: `[Ii]dempoten` — 幂等概念
-- Grep: `X-Idempotency-Key|idempotencyKey|requestId` — 客户端幂等键
-- Grep: `SETNX|setIfAbsent|unique.*constraint|DuplicateKeyException` — 原子存储
-
-**3.2 库存锁定与释放**
-- Grep: `SELECT.*FOR UPDATE|@Lock\(|PESSIMISTIC` — 悲观锁
-- Grep: `Redisson|RedisLock|distributedLock|tryLock` — 分布式锁
-- Grep: `releaseStock|releaseInventory|unlockStock|compensateStock` — 库存释放
-
-**3.3 支付事务模式**
-- Grep: `outTradeNo|transactionId.*unique|paymentKey` — 支付幂等
-- Grep: `verifySign|checkSign|validateNotify|verifySignature` — 回调验签
-- Grep: `reconcil|settlement` — 对账逻辑
-
-**3.4 分布式事务**
-- Grep: `@GlobalTransactional|io\.seata` — Seata 分布式事务
-- Grep: `@Saga|SagaOrchestrat|saga` — Saga 模式
-- Grep: `@Compensable|@Compensate|compensateMethod` — 补偿处理
-- Grep: `Outbox|outbox|@TransactionalEventListener` — Outbox 模式
-
-**3.5 秒杀/高并发防护**
-- Grep: `pre.*load.*stock|preload.*inventory|redis.*stock.*flash` — Redis 预加载
-- Grep: `queue.*order|send.*queue.*order|producer.*order|consumer.*order` — MQ 排队
-- Grep: `rate.*limit.*user|perUser.*rate|user.*rate.*limit` — 用户级限流
-
-**3.6 状态机监控**
-- Grep: `StateMachine|squirrel-foundation|stateless4j|state.*transition` — 状态机库
-- Grep: `@Scheduled.*status|stuck.*order|prolonged.*state` — 卡单检测
-- Grep: `status.*Counter|state.*change.*metric|transition.*counter` — 状态转换指标
-
-**3.7 第三方服务降级**
-- Grep: `interface.*Client|interface.*Gateway|interface.*Provider` — 外部服务抽象
-- Grep: `@CircuitBreaker.*name` — 与外部服务名映射，确认每个外部服务有独立熔断
-- Grep: `fallback.*cached|fallback.*degrad|fallback.*alternative` — 降级逻辑
-
-**3.8 业务告警指标**
-- Grep: `Counter\.builder.*order|Counter\.builder.*payment|Counter\.builder.*business` — 业务计数器
-- Grep: `alert.*threshold|alert.*rate|SLA|SLI` — 告警配置
-
-**3.9 用户旅程/漏斗追踪**
-- Grep: `AnalyticsEvent|FunnelEvent|UserActionEvent|TrackingEvent` — 分析事件
-- Grep: `viewed.*event|added.*cart.*event|checkout.*event|placed.*order.*event` — 漏斗事件
-
-**3.10 超时管理**
-- Grep: `@Transactional\(timeout|setReadTimeout|setConnectTimeout|responseTimeout` — 超时配置
-- Grep: `@TimeLimiter\(` — Resilience4j 时间限制器
-
-**3.11 数据一致性对账**
-- Grep: `@Scheduled.*reconcil|@Scheduled.*settlement|@Scheduled.*consistency` — 定时对账
-- Grep: `reconcil|consistency.*check|compare.*gateway|compare.*remote` — 对账逻辑
-
----
-
-### 阶段五：分类评定
-
-对每个维度，分类为"已具备""部分具备"或"缺失"：
-
-**已具备（评分 1.0）**：
-- 模式在 3 处以上出现，或出现在专门的配置类中
-- 跨模块一致应用
-- 配置或集成可见（配置类、yml 条目）
-- 配套机制齐全（如熔断有降级，缓存有淘汰）
-
-**部分具备（评分 0.5）**：
-- 模式仅在 1-2 处出现，或跨模块不一致
-- 有注解但缺配置
-- 有模式但缺配套（如重试缺恢复，熔断缺降级）
-- 有依赖但无自定义配置
-
-**缺失（评分 0.0）**：
-- 未找到相关 import、注解或配置
-
-每个维度记录：
-- `status`: "present" | "partial" | "missing"
-- `score`: 1.0 | 0.5 | 0.0
-- `evidence`: `{file, snippet}` 数组（最多 5 条）
-- `summary`: 一句话总结
-- `recommendations`: 改进建议数组（针对 partial/missing）
-
----
-
-### 阶段六：评分计算
-
-```
-通用DFX得分 = 通用DFX各维度得分之和 / 13
-业务DFX得分 = 业务DFX各维度得分之和 / 11
-综合得分 = 通用DFX × 0.50 + 业务DFX × 0.50
+文件: XxxService.java
+信号: [日志] @Slf4j + log.info/error 混用
+     [异常] try/catch 包裹外部调用，但未抛业务异常
+     [熔断] 未发现 CircuitBreaker
+     [指标] 未发现 @Timed 或 Counter
+     ...
 ```
 
-得分评级：
-- 0.80 - 1.00：优秀
-- 0.60 - 0.79：良好
-- 0.40 - 0.59：一般
-- 0.20 - 0.39：薄弱
-- 0.00 - 0.19：严重不足
+#### 子步骤 2.3：聚合维度评分
+
+每个文件读完后，将信号聚合到 24 个维度（13 通用 + 11 业务）。
+
+**判定标准**：
+
+| 状态 | 标准 |
+|------|------|
+| **已具备** | 在 3+ 个关键文件（Service/Controller/Config）中发现该维度信号，配置完整，配套齐全 |
+| **部分具备** | 仅在 1-2 个文件中发现，或配置不完整，或缺少配套（如熔断无降级、缓存无淘汰） |
+| **缺失** | 所有已读文件中均未发现该维度信号 |
+
+维度细节和信号清单见 `references/analysis-framework.md`。
+
+#### 子步骤 2.4：业务领域发现
+
+从已读取的文件中提取业务领域。基于包名关键词、类名关键词（`Order`、`Payment`、`Inventory` 等），使用 `references/domains.json` 中的 `vocabulary` 映射为中文标签。
 
 ---
 
-### 阶段七：生成 HTML 报告
+### 阶段三：跨服务汇总
 
-1. **构建 JSON 数据结构**，参照以下 schema：
+所有服务扫描完成后，生成跨服务对比：
+
+1. **服务排名**：按综合 DFX 得分降序排列
+2. **共性缺口**：统计每个维度在多少服务中标记为"缺失"或"部分具备"。取缺失率最高的 Top 5 作为"跨服务共性短板"
+3. **各服务得分矩阵**：每个服务 × 每个维度的得分矩阵，用于跨服务雷达图
+
+---
+
+### 阶段四：评分计算
+
+每服务独立评分：
+
+```
+通用DFX得分 = 该服务 13 个通用维度得分之和 / 13
+业务DFX得分 = 该服务 11 个业务维度得分之和 / 11
+服务综合得分 = 通用DFX × 0.50 + 业务DFX × 0.50
+```
+
+跨服务整体评分取各服务得分的算术平均。
+
+得分评级（0.00-1.00）：
+- 0.80+ 优秀、0.60+ 良好、0.40+ 一般、0.20+ 薄弱、0.00-0.19 严重不足
+
+---
+
+### 阶段五：生成多服务报告
+
+1. **构建 JSON 数据结构**：
 
 ```json
 {
-  "projectName": "项目名",
-  "scanTimestamp": "扫描时间（ISO 格式）",
-  "scanDuration": "扫描耗时",
-  "totalJavaFiles": 0,
-  "buildSystem": "Maven|Gradle|Unknown",
-  "springBootVersion": "版本号",
-  "springCloudVersion": "版本号或 null",
-  "businessDomains": [
-    { "name": "领域名", "detected": true, "fileCount": 0, "keyClasses": [] }
-  ],
-  "genericDFX": [
-    { "id": "2.1", "name": "维度名", "status": "present|partial|missing",
-      "score": 1.0, "summary": "一句话评估", "evidence": [{"file":"文件路径","snippet":"代码片段"}],
-      "recommendations": ["改进建议"] }
-  ],
-  "businessDFX": [
-    { "id": "3.1", "name": "维度名", "status": "present|partial|missing",
-      "score": 1.0, "summary": "一句话评估", "evidence": [{"file":"文件路径","snippet":"代码片段"}],
-      "recommendations": ["改进建议"] }
-  ],
-  "scores": {
-    "overall": 0.0, "genericDFX": 0.0, "businessDFX": 0.0
-  },
-  "remediation": [
+  "scanTimestamp": "2026-05-18 15:30:00",
+  "scanDuration": "45s",
+  "totalServices": 3,
+  "services": [
     {
-      "priority": "P0|P1|P2",
-      "phase": "快速见效|核心加固|持续完善",
-      "dimensionId": "2.1",
-      "dimensionName": "维度名",
-      "action": "具体改造动作",
-      "targetFiles": ["文件路径"],
-      "codePattern": "代码示例",
-      "effort": "工作量预估",
-      "impact": "改造效果"
+      "name": "order-service",
+      "totalJavaFiles": 120,
+      "springBootVersion": "3.2.0",
+      "buildSystem": "Maven",
+      "businessDomains": [
+        { "name": "订单处理", "detected": true, "fileCount": 28, "keyClasses": ["..."] }
+      ],
+      "genericDFX": [
+        { "id": "2.1", "name": "日志诊断", "status": "present", "score": 1.0,
+          "summary": "...", "evidence": [{"file":"","snippet":""}], "recommendations": [] }
+      ],
+      "businessDFX": [ /* 同结构 */ ],
+      "scores": { "overall": 0.72, "genericDFX": 0.68, "businessDFX": 0.76 },
+      "remediation": [
+        { "priority": "P0", "phase": "快速见效", "dimensionId": "2.12", "dimensionName": "优雅关闭",
+          "action": "...", "targetFiles": ["..."], "codePattern": "...", "effort": "2min", "impact": "..." }
+      ]
     }
-  ]
+  ],
+  "crossService": {
+    "ranking": ["order-service", "payment-service"],
+    "comparisonMatrix": {
+      "order-service": { "overall": 0.72, "genericDFX": { "2.1": 1.0, "2.2": 0.5, ... }, "businessDFX": { "3.1": 0.5, ... } },
+      "payment-service": { ... }
+    },
+    "commonGaps": [
+      { "dimensionId": "2.8", "dimensionName": "链路追踪", "affectedCount": 3, "totalServices": 3 }
+    ]
+  }
 }
 ```
 
-2. **生成改造路线图（remediation 数组）**：遍历所有标记为"partial"或"missing"的维度，参考 `analysis-framework.md` 中"四、改造优先级与工作量指引"，为每个维度生成一条 remediation 条目。规则：
-   - `priority`: 从分析框架中的改造指引获取
-   - `targetFiles`: 优先使用实际扫描到的证据文件；证据不足时使用 `analysis-framework.md` 指引中的典型代码位置
-   - `codePattern`: 优先从证据片段提取实际代码模式；不足时使用分析框架中的标准代码示例
-   - 排序：P0 → P1 → P2，同一优先级内按风险等级 HIGH → MEDIUM → LOW
+2. **读取** `references/dashboard-template.html`。
 
-3. **读取** skill 目录下的 `references/dashboard-template.html`。
+3. **替换**模板中的 `__REPORT_DATA__` 为 JSON 字符串（注意转义）。
 
-3. **替换**模板中的 `__REPORT_DATA__` 占位符为 JSON 字符串。
-   JSON 转义注意事项：
-   - 文件路径中的反斜杠需转义（`\` → `\\`）
-   - 字符串内的双引号需转义（`"` → `\"`）
-   - 代码片段中的换行符需要移除或转义
-   - 确保 JSON 有效 — 无尾随逗号、括号匹配
+4. **写入** `dfx-report.html` 到当前工作目录。
 
-4. **写入** 当前工作目录下的 `dfx-report.html`。
-
-5. **报告** 完成：`DFX 审视完成。报告已保存至 {cwd}/dfx-report.html。综合得分：{score}分 — {评级}。`
+5. **报告**：`DFX 审视完成。共扫描 N 个微服务，报告已保存至 dfx-report.html。`
 
 ---
 
 ## 边界情况处理
 
-| 场景 | 处理方式 |
-|------|---------|
-| 无 Java 文件 | 中止："未找到 Java 源文件。请在 Java 项目根目录运行此 skill。" |
-| 无构建文件 | 使用目录名作为项目名，标注"构建系统未知" |
-| 多模块 Maven/Gradle | 找到包含 `@SpringBootApplication` 的模块，仅扫描该模块 |
-| 非 Spring 项目 | 对适用维度执行通用 Java 分析；标注"非 Spring 项目" |
-| 检测到的业务领域 < 3 | 仍生成完整报告；标注"电商领域覆盖偏少" |
-| Java 文件 > 5000 | 仅扫描 `service/`、`controller/`、`config/` 子目录 |
-| Grep 无输出 | 该维度评分"缺失"；证据标注"未找到匹配模式" |
-| 排除生成代码 | 所有 grep 添加 `--glob='!target/**'` 和 `--glob='!build/**'` |
-| 模板文件找不到 | 在 SKILL.md 所在目录下搜索，推导 references/ 路径 |
+| 场景 | 处理 |
+|------|------|
+| 单服务项目 | 退化为单服务报告视图，隐藏跨服务对比区 |
+| Java 文件 > 2000/服务 | 对 Entity/DTO/VO/Enum/Test 彻底跳过，仅读 P0+P1 |
+| 非 Maven/Gradle | 使用目录名作为服务名，跳过依赖版本检测 |
+| 非 Spring 项目 | 标注"非 Spring 项目"，DFX 评分仅基于 Java 通用实践 |
+| 无 Java 文件 | 中止："未找到 Java 源文件。" |
+| 模板文件找不到 | 在 SKILL.md 所在目录下搜索 references/ 路径 |
 
 ## 参考资料
 
-- `references/analysis-framework.md` — 详细的搜索模式、分类标准和各维度风险等级
-- `references/dashboard-template.html` — 自包含 HTML 仪表盘模板（SVG 图表 + 内联 CSS/JS）
+- `references/analysis-framework.md` — DFX 维度定义、代码信号清单、分类标准、改造指引
+- `references/domains.json` — 业务领域词汇映射表 + 过滤路径配置
+- `references/dashboard-template.html` — 自包含多服务仪表盘 HTML 模板

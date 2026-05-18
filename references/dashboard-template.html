@@ -8,277 +8,154 @@
 /* ===== Reset & Base ===== */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg-primary:#f8fafc;
-  --bg-secondary:#ffffff;
-  --bg-card:#ffffff;
-  --text-primary:#1e293b;
-  --text-secondary:#64748b;
-  --text-muted:#94a3b8;
+  --bg-primary:#f8fafc;--bg-secondary:#fff;--bg-card:#fff;
+  --text-primary:#1e293b;--text-secondary:#64748b;--text-muted:#94a3b8;
   --border-color:#e2e8f0;
-  --shadow-sm:0 1px 2px rgba(0,0,0,.05);
-  --shadow-md:0 4px 6px -1px rgba(0,0,0,.07),0 2px 4px -2px rgba(0,0,0,.05);
-  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -4px rgba(0,0,0,.05);
-  --radius:12px;
-  --radius-sm:8px;
-  --green-bg:#dcfce7;--green-text:#166534;--green-border:#bbf7d0;
-  --amber-bg:#fef3c7;--amber-text:#92400e;--amber-border:#fde68a;
-  --red-bg:#fee2e2;--red-text:#991b1b;--red-border:#fecaca;
-  --accent:#6366f1;
-  --accent-light:#e0e7ff;
-  --chart-fill:rgba(99,102,241,.15);
-  --chart-stroke:rgba(99,102,241,.7);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.05);--shadow-md:0 4px 6px -1px rgba(0,0,0,.07);
+  --radius:12px;--radius-sm:8px;
+  --green-bg:#dcfce7;--green-text:#166534;--amber-bg:#fef3c7;--amber-text:#92400e;
+  --red-bg:#fee2e2;--red-text:#991b1b;
+  --accent:#6366f1;--accent-light:#e0e7ff;
+  --chart-colors:#6366f1,#f59e0b,#10b981,#ef4444,#8b5cf6,#06b6d4,#ec4899,#14b8a6
 }
 [data-theme="dark"]{
-  --bg-primary:#0f172a;
-  --bg-secondary:#1e293b;
-  --bg-card:#1e293b;
-  --text-primary:#f1f5f9;
-  --text-secondary:#94a3b8;
-  --text-muted:#64748b;
-  --border-color:#334155;
-  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
-  --shadow-md:0 4px 6px -1px rgba(0,0,0,.4);
-  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.5);
-  --green-bg:#022c22;--green-text:#4ade80;--green-border:#064e3b;
-  --amber-bg:#422006;--amber-text:#fbbf24;--amber-border:#78350f;
-  --red-bg:#2e0404;--red-text:#f87171;--red-border:#7f1d1d;
-  --accent:#818cf8;
-  --accent-light:#1e1b4b;
-  --chart-fill:rgba(129,140,248,.2);
-  --chart-stroke:rgba(129,140,248,.7);
+  --bg-primary:#0f172a;--bg-secondary:#1e293b;--bg-card:#1e293b;
+  --text-primary:#f1f5f9;--text-secondary:#94a3b8;--text-muted:#64748b;--border-color:#334155;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);--shadow-md:0 4px 6px -1px rgba(0,0,0,.4);
+  --green-bg:#022c22;--green-text:#4ade80;--amber-bg:#422006;--amber-text:#fbbf24;
+  --red-bg:#2e0404;--red-text:#f87171;--accent:#818cf8;--accent-light:#1e1b4b;
 }
-body{
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue","Microsoft YaHei","PingFang SC",Arial,sans-serif;
-  background:var(--bg-primary);
-  color:var(--text-primary);
-  line-height:1.6;
-  padding:0;
-  min-height:100vh;
-}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.6;min-height:100vh}
 .container{max-width:1280px;margin:0 auto;padding:0 24px 48px}
 
-/* ===== Header ===== */
-.header{
-  background:var(--bg-secondary);
-  border-bottom:1px solid var(--border-color);
-  padding:16px 24px;
-  position:sticky;top:0;z-index:100;
-  box-shadow:var(--shadow-sm);
-}
-.header-inner{
-  max-width:1280px;margin:0 auto;
-  display:flex;align-items:center;justify-content:space-between;
-  flex-wrap:wrap;gap:12px;
-}
-.header-left h1{font-size:1.25rem;font-weight:700}
-.header-left .meta{
-  font-size:.8rem;color:var(--text-secondary);margin-top:2px;
-  display:flex;flex-wrap:wrap;gap:6px 16px;
-}
-.header-right{display:flex;align-items:center;gap:12px}
-.theme-toggle{
-  background:var(--bg-primary);border:1px solid var(--border-color);
-  border-radius:50%;width:36px;height:36px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.1rem;transition:all .2s;
-  color:var(--text-primary);
-}
+/* Header */
+.header{background:var(--bg-secondary);border-bottom:1px solid var(--border-color);padding:12px 24px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm)}
+.header-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.header-left h1{font-size:1.2rem;font-weight:700}
+.header-left .meta{font-size:.78rem;color:var(--text-secondary);display:flex;flex-wrap:wrap;gap:4px 14px}
+.theme-toggle{background:var(--bg-primary);border:1px solid var(--border-color);border-radius:50%;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--text-primary)}
 .theme-toggle:hover{background:var(--accent-light)}
 
-/* ===== Score Hero ===== */
-.score-hero{
-  display:flex;align-items:center;justify-content:center;
-  gap:40px;padding:40px 0;flex-wrap:wrap;
-}
-.gauge-container{flex-shrink:0}
-.gauge-label{text-align:center;margin-top:8px;font-size:.85rem;color:var(--text-secondary)}
-.score-details{display:flex;flex-direction:column;gap:12px;min-width:220px}
-.score-item{display:flex;align-items:center;gap:12px}
-.score-item .label{width:100px;font-size:.85rem;color:var(--text-secondary)}
-.score-item .bar-bg{
-  flex:1;height:8px;background:var(--border-color);border-radius:4px;overflow:hidden;
-  min-width:120px;
-}
-.score-item .bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
-.score-item .value{width:48px;text-align:right;font-weight:700;font-size:.9rem}
+/* Tab nav */
+.tab-nav{display:flex;gap:4px;margin:24px 0 0;flex-wrap:wrap;border-bottom:2px solid var(--border-color);padding-bottom:0}
+.tab-btn{padding:8px 18px;border:none;background:transparent;cursor:pointer;font-size:.85rem;font-weight:500;color:var(--text-muted);border-radius:8px 8px 0 0;transition:all .15s}
+.tab-btn:hover{color:var(--text-primary);background:var(--accent-light)}
+.tab-btn.active{color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px;font-weight:700}
+.tab-btn .badge{font-size:.7rem;background:var(--accent-light);color:var(--accent);padding:1px 7px;border-radius:999px;margin-left:4px}
+
+/* Score hero */
+.score-hero{display:flex;align-items:center;justify-content:center;gap:40px;padding:32px 0;flex-wrap:wrap}
+.score-hero.small{padding:16px 0;gap:20px}
+.score-hero.small svg{width:140px;height:140px}
+.score-details{display:flex;flex-direction:column;gap:10px;min-width:200px}
+.score-item{display:flex;align-items:center;gap:10px}
+.score-item .label{width:90px;font-size:.82rem;color:var(--text-secondary)}
+.score-item .bar-bg{flex:1;height:7px;background:var(--border-color);border-radius:4px;overflow:hidden;min-width:110px}
+.score-item .bar-fill{height:100%;border-radius:4px;transition:width .6s}
+.score-item .value{width:44px;text-align:right;font-weight:700;font-size:.85rem}
 .bar-fill.generic{background:linear-gradient(90deg,#6366f1,#818cf8)}
 .bar-fill.business{background:linear-gradient(90deg,#8b5cf6,#a78bfa)}
-.bar-fill.landscape{background:linear-gradient(90deg,#06b6d4,#22d3ee)}
 
-/* ===== Section Titles ===== */
-.section-title{
-  font-size:1.15rem;font-weight:700;margin:32px 0 16px;
-  padding-bottom:8px;border-bottom:2px solid var(--accent);
-  display:inline-block;
-}
+/* Sections */
+.section-title{font-size:1.1rem;font-weight:700;margin:28px 0 14px;padding-bottom:6px;border-bottom:2px solid var(--accent);display:inline-block}
 
-/* ===== Business Landscape Cards ===== */
-.landscape-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
-  gap:12px;
-}
-.landscape-card{
-  background:var(--bg-card);border:1px solid var(--border-color);
-  border-radius:var(--radius-sm);padding:16px;
-  box-shadow:var(--shadow-sm);transition:all .2s;
-}
-.landscape-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
-.landscape-card .domain-name{font-weight:600;font-size:.9rem}
-.landscape-card .file-count{font-size:.75rem;color:var(--text-muted);margin-top:4px}
-.landscape-card .key-class{
-  font-size:.7rem;color:var(--text-muted);margin-top:4px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.landscape-card.not-detected{opacity:.35;background:var(--bg-primary)}
+/* Landscape */
+.landscape-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.landscape-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:14px;box-shadow:var(--shadow-sm)}
+.landscape-card .domain-name{font-weight:600;font-size:.85rem}
+.landscape-card .file-count{font-size:.73rem;color:var(--text-muted);margin-top:2px}
+.landscape-card .key-class{font-size:.68rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* ===== Radar Charts Row ===== */
-.radar-row{
-  display:grid;grid-template-columns:1fr 1fr;gap:24px;
-}
-@media(max-width:768px){.radar-row{grid-template-columns:1fr}}
-.radar-panel{
-  background:var(--bg-card);border:1px solid var(--border-color);
-  border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-sm);
-}
-.radar-panel h3{font-size:.95rem;margin-bottom:12px;text-align:center}
+/* Panels */
+.panel{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-sm)}
+.panel h3{font-size:.92rem;margin-bottom:10px}
+.grid-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:768px){.grid-2col{grid-template-columns:1fr}}
 
-/* ===== Score Grids ===== */
-.grid-row{display:grid;grid-template-columns:1fr 1fr;gap:24px}
-@media(max-width:768px){.grid-row{grid-template-columns:1fr}}
-.score-grid-panel{
-  background:var(--bg-card);border:1px solid var(--border-color);
-  border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-sm);
-}
-.score-grid-panel h3{font-size:.95rem;margin-bottom:12px}
+/* Score grid table */
 .score-grid-table{width:100%;border-collapse:collapse}
-.score-grid-table th{
-  text-align:left;font-size:.75rem;color:var(--text-muted);
-  padding:8px 4px;border-bottom:1px solid var(--border-color);
-  font-weight:600;letter-spacing:.05em;
-}
-.score-grid-table td{
-  padding:10px 4px;border-bottom:1px solid var(--border-color);
-  font-size:.85rem;
-}
+.score-grid-table th{text-align:left;font-size:.73rem;color:var(--text-muted);padding:6px 4px;border-bottom:1px solid var(--border-color);font-weight:600}
+.score-grid-table td{padding:8px 4px;border-bottom:1px solid var(--border-color);font-size:.82rem}
 .score-grid-table td:first-child{font-weight:500}
 .score-grid-table td:last-child{text-align:right;font-weight:700}
-.status-pill{
-  display:inline-flex;align-items:center;gap:4px;padding:2px 10px;
-  border-radius:999px;font-size:.75rem;font-weight:600;
-  white-space:nowrap;
-}
+.status-pill{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:999px;font-size:.72rem;font-weight:600;white-space:nowrap}
 .status-pill.present{background:var(--green-bg);color:var(--green-text)}
 .status-pill.partial{background:var(--amber-bg);color:var(--amber-text)}
 .status-pill.missing{background:var(--red-bg);color:var(--red-text)}
-.score-bar-mini{
-  display:inline-block;width:60px;height:6px;background:var(--border-color);
-  border-radius:3px;overflow:hidden;vertical-align:middle;margin-right:6px;
-}
+.score-bar-mini{display:inline-block;width:55px;height:5px;background:var(--border-color);border-radius:3px;overflow:hidden;vertical-align:middle;margin-right:5px}
 .score-bar-mini-fill{height:100%;border-radius:3px}
 
-/* ===== Accordion ===== */
-.accordion{margin-top:8px}
-.accordion-item{border:1px solid var(--border-color);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden}
-.accordion-header{
-  width:100%;display:flex;align-items:center;justify-content:space-between;
-  padding:14px 16px;background:var(--bg-card);border:none;cursor:pointer;
-  font-size:.9rem;font-weight:500;color:var(--text-primary);
-  transition:background .15s;text-align:left;
-}
+/* Accordion */
+.accordion-item{border:1px solid var(--border-color);border-radius:var(--radius-sm);margin-bottom:6px;overflow:hidden}
+.accordion-header{width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg-card);border:none;cursor:pointer;font-size:.87rem;font-weight:500;color:var(--text-primary);text-align:left}
 .accordion-header:hover{background:var(--accent-light)}
-.accordion-header .left{display:flex;align-items:center;gap:10px}
-.accordion-header .arrow{transition:transform .2s;font-size:.7rem;color:var(--text-muted)}
+.accordion-header .arrow{transition:transform .2s;font-size:.65rem;color:var(--text-muted);margin-right:6px}
 .accordion-header[aria-expanded="true"] .arrow{transform:rotate(90deg)}
-.accordion-panel{
-  max-height:0;overflow:hidden;transition:max-height .3s ease;
-}
-.accordion-panel-inner{padding:12px 16px 16px;border-top:1px solid var(--border-color)}
-.accordion-panel .evidence-item{
-  font-size:.8rem;padding:6px 0;border-bottom:1px dashed var(--border-color);
-  display:flex;gap:12px;align-items:flex-start;
-}
-.accordion-panel .evidence-item:last-child{border-bottom:none}
-.accordion-panel .evidence-file{color:var(--accent);font-family:monospace;font-size:.75rem;white-space:nowrap}
-.accordion-panel .evidence-snippet{
-  font-family:monospace;font-size:.75rem;color:var(--text-secondary);
-  background:var(--bg-primary);padding:2px 6px;border-radius:4px;
-}
-.accordion-panel .recommendation{
-  font-size:.8rem;color:var(--amber-text);margin-top:8px;
-  padding:8px 12px;background:var(--amber-bg);border-radius:6px;
-  border-left:3px solid var(--amber-border);
-}
+.accordion-panel{max-height:0;overflow:hidden;transition:max-height .3s}
+.accordion-panel-inner{padding:10px 14px 14px;border-top:1px solid var(--border-color)}
+.evidence-item{font-size:.78rem;padding:4px 0;border-bottom:1px dashed var(--border-color);display:flex;gap:10px}
+.evidence-file{color:var(--accent);font-family:monospace;font-size:.72rem;white-space:nowrap}
+.evidence-snippet{font-family:monospace;font-size:.72rem;color:var(--text-secondary);background:var(--bg-primary);padding:2px 5px;border-radius:4px}
+.recommendation{font-size:.78rem;color:var(--amber-text);margin-top:6px;padding:6px 10px;background:var(--amber-bg);border-radius:6px;border-left:3px solid var(--amber-border);border-color:var(--amber-border)}
 
-/* ===== Risk Summary ===== */
-.risk-table{width:100%;border-collapse:collapse;margin-top:8px}
-.risk-table th{
-  text-align:left;font-size:.75rem;color:var(--text-muted);
-  padding:10px 8px;border-bottom:1px solid var(--border-color);
-  font-weight:600;letter-spacing:.05em;
-}
-.risk-table td{padding:12px 8px;border-bottom:1px solid var(--border-color);font-size:.85rem}
-.risk-table .criticality{font-weight:700;font-size:.75rem;letter-spacing:.05em}
-.risk-table .criticality.high{color:var(--red-text)}
-.risk-table .criticality.medium{color:var(--amber-text)}
-.risk-table .criticality.low{color:var(--green-text)}
+/* Risk table */
+.risk-table{width:100%;border-collapse:collapse;margin-top:6px}
+.risk-table th{text-align:left;font-size:.73rem;color:var(--text-muted);padding:8px 6px;border-bottom:1px solid var(--border-color);font-weight:600}
+.risk-table td{padding:10px 6px;border-bottom:1px solid var(--border-color);font-size:.82rem}
+.criticality{font-weight:700;font-size:.72rem}
+.criticality.high{color:var(--red-text)}.criticality.medium{color:var(--amber-text)}.criticality.low{color:var(--green-text)}
 
-/* ===== Footer ===== */
-.footer{
-  text-align:center;padding:32px 0 16px;
-  font-size:.75rem;color:var(--text-muted);
-  border-top:1px solid var(--border-color);margin-top:40px;
-}
-
-/* ===== Remediation Roadmap ===== */
-.remediation-phase{margin-bottom:20px}
-.phase-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:.95rem;font-weight:700}
-.phase-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 12px;border-radius:999px;font-size:.75rem;font-weight:700}
-.phase-badge-p0{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
-.phase-badge-p1{background:#e0e7ff;color:#3730a3;border:1px solid #c7d2fe}
-.phase-badge-p2{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+/* Remediation */
+.remediation-phase{margin-bottom:16px}
+.phase-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:.9rem;font-weight:700}
+.phase-badge-p0{background:#fef3c7;color:#92400e;border:1px solid #fde68a;padding:2px 10px;border-radius:999px;font-size:.73rem}
+.phase-badge-p1{background:#e0e7ff;color:#3730a3;border:1px solid #c7d2fe;padding:2px 10px;border-radius:999px;font-size:.73rem}
+.phase-badge-p2{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;padding:2px 10px;border-radius:999px;font-size:.73rem}
 [data-theme="dark"] .phase-badge-p0{background:#422006;color:#fbbf24;border-color:#78350f}
 [data-theme="dark"] .phase-badge-p1{background:#1e1b4b;color:#818cf8;border-color:#3730a3}
 [data-theme="dark"] .phase-badge-p2{background:#022c22;color:#4ade80;border-color:#064e3b}
-.remediation-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
-.remediation-card{
-  background:var(--bg-card);border:1px solid var(--border-color);
-  border-radius:var(--radius-sm);padding:14px;
-  box-shadow:var(--shadow-sm);transition:all .15s;
-  position:relative;overflow:hidden;
-}
+.remediation-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.remediation-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:12px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
 .remediation-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
 .remediation-card.p0-card::before{background:#eab308}
 .remediation-card.p1-card::before{background:#6366f1}
 .remediation-card.p2-card::before{background:#22c55e}
-.remediation-card:hover{box-shadow:var(--shadow-md)}
-.remediation-card .rc-dim{font-size:.7rem;color:var(--text-muted);margin-bottom:4px;font-family:monospace}
-.remediation-card .rc-action{font-size:.85rem;font-weight:600;margin-bottom:6px}
-.remediation-card .rc-files{font-size:.75rem;color:var(--text-secondary);margin-bottom:6px}
-.remediation-card .rc-files code{font-family:monospace;font-size:.7rem;background:var(--bg-primary);padding:1px 5px;border-radius:3px;display:inline-block;margin:1px 2px 1px 0}
-.remediation-card .rc-effort{font-size:.73rem;color:var(--text-muted)}
-.remediation-card .rc-impact{font-size:.73rem;color:var(--green-text);margin-top:4px}
-.quick-start{
-  margin-top:24px;padding:20px;background:var(--accent-light);
-  border-radius:var(--radius);border:1px solid var(--accent);
-}
-.quick-start h4{font-size:.9rem;font-weight:700;margin-bottom:12px;color:var(--accent)}
-.quick-start ol{padding-left:20px;margin:0}
-.quick-start li{font-size:.85rem;padding:6px 0;color:var(--text-primary)}
-.quick-start li .qs-action{font-weight:600}
-.quick-start li .qs-file{font-family:monospace;font-size:.78rem;color:var(--accent)}
-.quick-start li .qs-effort{font-size:.75rem;color:var(--text-muted);margin-left:8px}
+.remediation-card .rc-dim{font-size:.68rem;color:var(--text-muted);font-family:monospace}
+.remediation-card .rc-action{font-size:.82rem;font-weight:600;margin:3px 0}
+.remediation-card .rc-files{font-size:.73rem;color:var(--text-secondary)}
+.remediation-card .rc-files code{font-family:monospace;font-size:.68rem;background:var(--bg-primary);padding:1px 4px;border-radius:3px;margin-right:3px}
+.remediation-card .rc-effort{font-size:.7rem;color:var(--text-muted);margin-top:3px}
+.remediation-card .rc-impact{font-size:.7rem;color:var(--green-text)}
+.quick-start{margin-top:20px;padding:16px;background:var(--accent-light);border-radius:var(--radius);border:1px solid var(--accent)}
+.quick-start h4{font-size:.85rem;font-weight:700;margin-bottom:10px;color:var(--accent)}
+.quick-start li{font-size:.82rem;padding:4px 0}
+.quick-start .qs-file{font-family:monospace;font-size:.75rem;color:var(--accent)}
 
-/* ===== Utility ===== */
-.muted{color:var(--text-muted);font-size:.8rem}
-.text-center{text-align:center}
+/* Ranking */
+.ranking-table{width:100%;border-collapse:collapse}
+.ranking-table th{text-align:left;font-size:.73rem;color:var(--text-muted);padding:8px;border-bottom:1px solid var(--border-color)}
+.ranking-table td{padding:10px 8px;border-bottom:1px solid var(--border-color);font-size:.85rem}
+.ranking-table .rank-num{font-weight:800;font-size:1.1rem}
+.ranking-bar-bg{display:inline-block;width:120px;height:8px;background:var(--border-color);border-radius:4px;overflow:hidden;vertical-align:middle;margin:0 8px}
+.ranking-bar-fill{height:100%;border-radius:4px}
+
+/* Common gaps */
+.gap-tag{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:999px;font-size:.78rem;font-weight:600;margin:3px}
+.gap-tag.all{background:var(--red-bg);color:var(--red-text)}
+.gap-tag.most{background:var(--amber-bg);color:var(--amber-text)}
+
+/* Footer */
+.footer{text-align:center;padding:28px 0;font-size:.73rem;color:var(--text-muted);border-top:1px solid var(--border-color);margin-top:36px}
+
+/* Utilities */
+.muted{color:var(--text-muted);font-size:.78rem}
 .mt-8{margin-top:8px}
 .mt-16{margin-top:16px}
+.hidden{display:none}
 </style>
 </head>
 <body>
 
-<!-- 主题初始化：先于页面渲染执行，避免闪烁 -->
 <script>
 (function(){
   var t=localStorage.getItem('dfx-theme');
@@ -289,498 +166,348 @@ body{
 })();
 </script>
 
-<!-- ===== HEADER ===== -->
+<!-- HEADER -->
 <header class="header">
 <div class="header-inner">
   <div class="header-left">
     <h1 id="project-name">DFX 运维审视报告</h1>
     <div class="meta">
-      <span id="meta-version"></span>
-      <span id="meta-files"></span>
-      <span id="meta-time"></span>
+      <span id="meta-summary"></span>
       <span id="meta-duration"></span>
     </div>
   </div>
-  <div class="header-right">
-    <button class="theme-toggle" id="theme-toggle" aria-label="切换主题" title="切换明亮/暗黑主题">&#9788;</button>
-  </div>
+  <button class="theme-toggle" id="theme-toggle" title="切换主题">&#9788;</button>
 </div>
 </header>
 
 <div class="container">
 
-<!-- ===== 综合得分 ===== -->
-<div class="score-hero" id="score-hero"></div>
+<!-- TAB NAV -->
+<nav class="tab-nav" id="tab-nav"></nav>
 
-<!-- ===== 业务领域图谱 ===== -->
-<h2 class="section-title">业务领域图谱</h2>
-<div class="landscape-grid" id="landscape-grid"></div>
-<p class="muted mt-8">灰色卡片表示该业务领域在代码中未检测到。</p>
+<!-- TAB CONTENT -->
+<div id="tab-content"></div>
 
-<!-- ===== 雷达图 ===== -->
-<h2 class="section-title">DFX 各维度总览</h2>
-<div class="radar-row">
-  <div class="radar-panel">
-    <h3>通用 DFX（13 维度）</h3>
-    <svg id="radar-generic" viewBox="0 0 300 300" style="width:100%;max-width:380px;display:block;margin:0 auto"></svg>
-  </div>
-  <div class="radar-panel">
-    <h3>业务 DFX（11 维度）</h3>
-    <svg id="radar-business" viewBox="0 0 300 300" style="width:100%;max-width:380px;display:block;margin:0 auto"></svg>
-  </div>
-</div>
-
-<!-- ===== 评分明细 ===== -->
-<h2 class="section-title">评分明细</h2>
-<div class="grid-row">
-  <div class="score-grid-panel">
-    <h3>通用 DFX</h3>
-    <table class="score-grid-table">
-      <thead><tr><th>维度</th><th>状态</th><th>得分</th></tr></thead>
-      <tbody id="grid-generic"></tbody>
-    </table>
-  </div>
-  <div class="score-grid-panel">
-    <h3>业务 DFX</h3>
-    <table class="score-grid-table">
-      <thead><tr><th>维度</th><th>状态</th><th>得分</th></tr></thead>
-      <tbody id="grid-business"></tbody>
-    </table>
-  </div>
-</div>
-
-<!-- ===== 详细发现 ===== -->
-<h2 class="section-title">详细发现</h2>
-<div class="grid-row">
-  <div class="score-grid-panel">
-    <h3>通用 DFX 详情</h3>
-    <div class="accordion" id="accordion-generic"></div>
-  </div>
-  <div class="score-grid-panel">
-    <h3>业务 DFX 详情</h3>
-    <div class="accordion" id="accordion-business"></div>
-  </div>
-</div>
-
-<!-- ===== 风险汇总 ===== -->
-<h2 class="section-title">风险汇总</h2>
-<div class="score-grid-panel">
-  <table class="risk-table">
-    <thead><tr><th>风险等级</th><th>维度</th><th>状态</th><th>影响</th></tr></thead>
-    <tbody id="risk-table-body"></tbody>
-  </table>
-</div>
-
-<!-- ===== 改造路线图 ===== -->
-<div id="remediation-section" style="display:none">
-<h2 class="section-title">改造路线图</h2>
-  <div id="quick-start" class="quick-start" style="display:none">
-    <h4>&#128204; 首先做这三件事</h4>
-    <ol id="quick-start-list"></ol>
-  </div>
-  <div class="remediation-phase" id="phase-p0"></div>
-  <div class="remediation-phase" id="phase-p1"></div>
-  <div class="remediation-phase" id="phase-p2"></div>
-</div>
-
-<!-- ===== FOOTER ===== -->
+<!-- FOOTER -->
 <div class="footer">
   由 DFX 运维审视 Skill 生成 &mdash; Claude Code<br>
   扫描时间：<span id="footer-time"></span>
 </div>
+</div>
 
-</div><!-- /container -->
+<script id="report-data" type="application/json">__REPORT_DATA__</script>
 
-<!-- ===== 报告数据 ===== -->
-<script id="report-data" type="application/json">
-__REPORT_DATA__
-</script>
-
-<!-- ===== 渲染脚本 ===== -->
 <script>
-// ===== 数据加载 =====
 var R = JSON.parse(document.getElementById('report-data').textContent);
+var ACTIVE_TAB = null;
 
-// ===== 主题切换 =====
+// ===== HELPERS =====
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function pct(n){return Math.round((n||0)*100)}
+function stLabel(st){return st==='present'?'已具备':st==='partial'?'部分具备':'缺失'}
+function stPill(s){return '<span class="status-pill '+s+'">'+stLabel(s)+'</span>'}
+
+// ===== THEME =====
 (function(){
   var btn=document.getElementById('theme-toggle');
-  function setIcon(){
-    var isDark=document.documentElement.getAttribute('data-theme')==='dark';
-    btn.innerHTML=isDark?'&#9789;':'&#9788;';
-  }
-  setIcon();
+  function icon(){btn.innerHTML=document.documentElement.getAttribute('data-theme')==='dark'?'&#9789;':'&#9788;'}
+  icon();
   btn.addEventListener('click',function(){
-    var cur=document.documentElement.getAttribute('data-theme');
-    var next=cur==='dark'?'':'dark';
-    document.documentElement.setAttribute('data-theme',next);
-    localStorage.setItem('dfx-theme',next);
-    setIcon();
-    renderAll();
+    var n=document.documentElement.getAttribute('data-theme')==='dark'?'':'dark';
+    document.documentElement.setAttribute('data-theme',n);
+    localStorage.setItem('dfx-theme',n);icon();renderAll();
   });
 })();
 
-// ===== 头部信息 =====
+// ===== HEADER =====
 (function(){
-  document.getElementById('project-name').textContent='DFX 审视：'+(R.projectName||'未知项目');
-  var mv=document.getElementById('meta-version');
-  mv.textContent='Spring Boot '+(R.springBootVersion||'未知');
-  if(R.springCloudVersion) mv.textContent+=' | Spring Cloud '+R.springCloudVersion;
-  document.getElementById('meta-files').textContent=(R.totalJavaFiles||0)+' 个 Java 文件';
-  document.getElementById('meta-time').textContent='扫描时间：'+(R.scanTimestamp||'');
-  document.getElementById('meta-duration').textContent='耗时：'+(R.scanDuration||'');
+  var svcs=R.services||[];
+  document.getElementById('project-name').textContent='DFX 审视：'+(svcs.map(function(s){return s.name}).join('、')||'未知');
+  document.getElementById('meta-summary').textContent=svcs.length+' 个微服务';
+  document.getElementById('meta-duration').textContent='耗时 '+R.scanDuration;
   document.getElementById('footer-time').textContent=R.scanTimestamp||'';
 })();
 
-// ===== 综合得分仪表盘 =====
-function renderScoreHero(){
-  var overall=R.scores.overall||0;
-  var pct=Math.round(overall*100);
-  var color=pct>=80?'#22c55e':pct>=60?'#eab308':pct>=40?'#f97316':'#ef4444';
-
-  var rating=pct>=80?'优秀':pct>=60?'良好':pct>=40?'一般':pct>=20?'薄弱':'严重不足';
-
-  var svg='<svg viewBox="0 0 240 240" width="200" height="200"><defs>'+
-    '<linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">'+
-    '<stop offset="0%" stop-color="#ef4444"/>'+
-    '<stop offset="40%" stop-color="#eab308"/>'+
-    '<stop offset="80%" stop-color="#22c55e"/>'+
-    '</linearGradient></defs>';
-
-  var cx=120,cy=130,Rx=90,angleStart=-220,angleEnd=40;
-  // 背景弧
-  svg+=drawArc(cx,cy,Rx,'var(--border-color)',angleStart,angleEnd,12);
-
-  // 得分弧
-  var sweep=(angleEnd-angleStart)*(overall);
-  var scoreAngle=angleStart+sweep;
-  svg+=drawArc(cx,cy,Rx,color,angleStart,scoreAngle,12);
-
-  // 中心文字
-  svg+='<text x="120" y="110" text-anchor="middle" font-size="48" font-weight="800" fill="'+color+'">'+pct+'%</text>';
-  svg+='<text x="120" y="140" text-anchor="middle" font-size="14" fill="var(--text-secondary)">综合 DFX 评分</text>';
-  svg+='<text x="120" y="160" text-anchor="middle" font-size="12" fill="'+color+'">'+rating+'</text>';
-  svg+='</svg>';
-
-  var hero=document.getElementById('score-hero');
-  hero.innerHTML='<div class="gauge-container">'+svg+'</div>'+
-    '<div class="score-details">'+
-    scoreDetail('通用 DFX',R.scores.genericDFX,'generic')+
-    scoreDetail('业务 DFX',R.scores.businessDFX,'business')+
-    '</div>';
-}
-
+// ===== SVG HELPERS =====
 function drawArc(cx,cy,r,color,startAngle,endAngle,width){
   var sr=startAngle*Math.PI/180,er=endAngle*Math.PI/180;
   var x1=cx+r*Math.cos(sr),y1=cy+r*Math.sin(sr);
   var x2=cx+r*Math.cos(er),y2=cy+r*Math.sin(er);
   var large=er-sr>Math.PI?1:0;
-  var d='M '+x1+' '+y1+' A '+r+' '+r+' 0 '+large+' 1 '+x2+' '+y2;
-  return '<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="'+width+'" stroke-linecap="round"/>';
+  return '<path d="M '+x1+' '+y1+' A '+r+' '+r+' 0 '+large+' 1 '+x2+' '+y2+'" fill="none" stroke="'+color+'" stroke-width="'+width+'" stroke-linecap="round"/>';
 }
 
-function scoreDetail(label,score,cls){
-  var pct=Math.round((score||0)*100);
-  return '<div class="score-item">'+
-    '<span class="label">'+label+'</span>'+
-    '<span class="bar-bg"><span class="bar-fill '+cls+'" style="width:'+pct+'%"></span></span>'+
-    '<span class="value">'+pct+'%</span></div>';
+// ===== SCORE HERO =====
+function renderScoreHero(svc,small){
+  var o=svc.scores.overall||0,p=pct(o);
+  var color=p>=80?'#22c55e':p>=60?'#eab308':p>=40?'#f97316':'#ef4444';
+  var rating=p>=80?'优秀':p>=60?'良好':p>=40?'一般':p>=20?'薄弱':'严重不足';
+  var size=small?160:200;
+  var svg='<svg viewBox="0 0 240 240" width="'+size+'" height="'+size+'">';
+  var cx=120,cy=130,rx=90,as=-220,ae=40;
+  svg+=drawArc(cx,cy,rx,'var(--border-color)',as,ae,12);
+  svg+=drawArc(cx,cy,rx,color,as,as+(ae-as)*o,12);
+  svg+='<text x="120" y="110" text-anchor="middle" font-size="48" font-weight="800" fill="'+color+'">'+p+'%</text>';
+  svg+='<text x="120" y="138" text-anchor="middle" font-size="13" fill="var(--text-secondary)">'+rating+'</text>';
+  svg+='</svg>';
+  return '<div class="score-hero'+(small?' small':'')+'">'+
+    '<div>'+svg+'</div>'+
+    '<div class="score-details">'+
+    scoreBar('通用 DFX',svc.scores.genericDFX,'generic')+
+    scoreBar('业务 DFX',svc.scores.businessDFX,'business')+
+    '</div></div>';
+}
+function scoreBar(label,score,cls){
+  return '<div class="score-item"><span class="label">'+label+'</span><span class="bar-bg"><span class="bar-fill '+cls+'" style="width:'+pct(score)+'%"></span></span><span class="value">'+pct(score)+'%</span></div>';
 }
 
-// ===== 业务领域图谱 =====
-function renderLandscape(){
-  var domains=R.businessDomains||[];
-  var grid=document.getElementById('landscape-grid');
-  grid.innerHTML=domains.map(function(d){
-    return '<div class="landscape-card">'+
-      '<div class="domain-name">&#9679; '+escHtml(d.name)+'</div>'+
-      '<div class="file-count">'+d.fileCount+' 个文件</div>'+
-      (d.keyClasses&&d.keyClasses.length?'<div class="key-class">'+d.keyClasses.slice(0,3).join(', ')+'</div>':'')+
-      '</div>';
-  }).join('');
+// ===== LANDSCAPE =====
+function renderLandscape(svc){
+  var d=(svc.businessDomains||[]).filter(function(x){return x.detected});
+  if(!d.length) return '<p class="muted">未检测到明确的业务领域。</p>';
+  return '<div class="landscape-grid">'+d.map(function(x){
+    return '<div class="landscape-card"><div class="domain-name">&#9679; '+esc(x.name)+'</div><div class="file-count">'+x.fileCount+' 个文件</div>'+(x.keyClasses&&x.keyClasses.length?'<div class="key-class">'+x.keyClasses.slice(0,3).join(', ')+'</div>':'')+'</div>';
+  }).join('')+'</div>';
 }
 
-// ===== 雷达图 =====
-function renderRadar(svgId,dimensions,labelMap){
+// ===== RADAR =====
+function renderRadar(svgId,dimensions,labels,color){
   var svg=document.getElementById(svgId);
   var cx=150,cy=150,r=120,N=dimensions.length;
-  var angleStep=2*Math.PI/N;
-  var startAngle=-Math.PI/2;
-
+  var step=2*Math.PI/N,sa=-Math.PI/2;
   var html='';
-
-  // 网格环
-  for(var level=1;level<=5;level++){
-    var rr=r*level/5;
-    html+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rr+'" fill="none" stroke="var(--border-color)" stroke-width="0.5"/>';
-    html+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rr+'" fill="none" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="2,4" opacity="0.3"/>';
+  for(var lv=1;lv<=5;lv++){var rr=r*lv/5;html+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rr+'" fill="none" stroke="var(--border-color)" stroke-width="0.5"/>';}
+  for(var i=0;i<N;i++){var a=sa+i*step;html+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+r*Math.cos(a))+'" y2="'+(cy+r*Math.sin(a))+'" stroke="var(--border-color)" stroke-width="0.5"/>';}
+  var pts=[];
+  for(var i=0;i<N;i++){var sc=dimensions[i]?dimensions[i].score:0;var a=sa+i*step;var dist=r*sc;pts.push((cx+dist*Math.cos(a))+','+(cy+dist*Math.sin(a)));}
+  if(pts.length){html+='<polygon points="'+pts.join(' ')+'" fill="'+color.replace('1)','0.15)')+'" stroke="'+color+'" stroke-width="2"/>';for(var i=0;i<N;i++){var p=pts[i].split(',');html+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3" fill="'+color+'"/>';}}
+  for(var i=0;i<N;i++){var a=sa+i*step;var lr=r+24;var lx=cx+lr*Math.cos(a),ly=cy+lr*Math.sin(a);var name=labels[i]||'';if(name.length>6)name=name.substring(0,5)+'..';var anchor='middle';if(Math.cos(a)>0.1)anchor='start';else if(Math.cos(a)<-0.1)anchor='end';html+='<text x="'+lx+'" y="'+ly+'" text-anchor="'+anchor+'" dominant-baseline="middle" font-size="9" fill="var(--text-secondary)">'+esc(name)+'</text>';}
+  svg.innerHTML=html;
+}
+// Overlay multi-service radar
+function renderOverlayRadar(svgId,allSvcData,dimKey,labels){
+  var svg=document.getElementById(svgId);
+  var cx=150,cy=150,r=120,N=labels.length;
+  var step=2*Math.PI/N,sa=-Math.PI/2;
+  var colors=['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#ec4899','#14b8a6'];
+  var html='';
+  for(var lv=1;lv<=5;lv++){var rr=r*lv/5;html+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rr+'" fill="none" stroke="var(--border-color)" stroke-width="0.5"/>';}
+  for(var i=0;i<N;i++){var a=sa+i*step;html+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+r*Math.cos(a))+'" y2="'+(cy+r*Math.sin(a))+'" stroke="var(--border-color)" stroke-width="0.5"/>';}
+  for(var si=0;si<allSvcData.length;si++){
+    var dims=allSvcData[si][dimKey]||[];
+    var color=colors[si%colors.length];
+    var pts=[];
+    for(var i=0;i<N;i++){var sc=dims[i]?dims[i].score:0;var a=sa+i*step;var dist=r*sc;pts.push((cx+dist*Math.cos(a))+','+(cy+dist*Math.sin(a)));}
+    if(pts.length){html+='<polygon points="'+pts.join(' ')+'" fill="'+color.replace('1)','0.08)')+'" stroke="'+color+'" stroke-width="1.5" stroke-dasharray="'+(si===0?'0':'4,2')+'"/>';for(var i=0;i<N;i++){var p=pts[i].split(',');html+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.5" fill="'+color+'"/>';}}
   }
-
-  // 轴线
-  for(var i=0;i<N;i++){
-    var a=startAngle+i*angleStep;
-    var x=cx+r*Math.cos(a),y=cy+r*Math.sin(a);
-    html+='<line x1="'+cx+'" y1="'+cy+'" x2="'+x+'" y2="'+y+'" stroke="var(--border-color)" stroke-width="0.5"/>';
+  for(var i=0;i<N;i++){var a=sa+i*step;var lr=r+24;var lx=cx+lr*Math.cos(a),ly=cy+lr*Math.sin(a);var name=labels[i]||'';if(name.length>6)name=name.substring(0,5)+'..';var anchor='middle';if(Math.cos(a)>0.1)anchor='start';else if(Math.cos(a)<-0.1)anchor='end';html+='<text x="'+lx+'" y="'+ly+'" text-anchor="'+anchor+'" dominant-baseline="middle" font-size="9" fill="var(--text-secondary)">'+esc(name)+'</text>';}
+  // Legend
+  for(var si=0;si<allSvcData.length;si++){
+    html+='<rect x="215" y="'+(10+si*18)+'" width="10" height="10" fill="'+colors[si%colors.length]+'" rx="2"/>';
+    html+='<text x="230" y="'+(19+si*18)+'" font-size="9" fill="var(--text-secondary)">'+esc(allSvcData[si].name||'svc'+si)+'</text>';
   }
-
-  // 数据多边形
-  var dataPts=[];
-  for(var i=0;i<N;i++){
-    var d=dimensions[i];
-    var score=d?d.score:0;
-    var a=startAngle+i*angleStep;
-    var dist=r*score;
-    var x=cx+dist*Math.cos(a),y=cy+dist*Math.sin(a);
-    dataPts.push(x+','+y);
-  }
-  if(dataPts.length){
-    html+='<polygon points="'+dataPts.join(' ')+'" fill="var(--chart-fill)" stroke="var(--chart-stroke)" stroke-width="2"/>';
-    for(var i=0;i<N;i++){
-      var p=dataPts[i].split(',');
-      html+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3" fill="var(--chart-stroke)"/>';
-    }
-  }
-
-  // 标签
-  for(var i=0;i<N;i++){
-    var a=startAngle+i*angleStep;
-    var lr=r+24;
-    var lx=cx+lr*Math.cos(a),ly=cy+lr*Math.sin(a);
-    var name=labelMap[i]||(dimensions[i]?dimensions[i].name:'');
-    if(name.length>8) name=name.substring(0,7)+'..';
-    var anchor='middle';
-    if(Math.cos(a)>0.1) anchor='start';
-    else if(Math.cos(a)<-0.1) anchor='end';
-    html+='<text x="'+lx+'" y="'+ly+'" text-anchor="'+anchor+'" dominant-baseline="middle" font-size="10" fill="var(--text-secondary)">'+escHtml(name)+'</text>';
-  }
-
   svg.innerHTML=html;
 }
 
-function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-
-// ===== 评分明细表 =====
-function renderScoreGrid(tbodyId,dimensions){
-  var tbody=document.getElementById(tbodyId);
-  var statusLabels={present:'已具备',partial:'部分具备',missing:'缺失'};
-  tbody.innerHTML=dimensions.map(function(d){
-    var pct=Math.round((d.score||0)*100);
-    var fillColor=pct>=80?'var(--green-text)':pct>=40?'var(--amber-text)':'var(--red-text)';
-    return '<tr>'+
-      '<td>'+escHtml(d.name)+'</td>'+
-      '<td><span class="status-pill '+d.status+'">'+ (statusLabels[d.status]||d.status) +'</span></td>'+
-      '<td><span class="score-bar-mini"><span class="score-bar-mini-fill" style="width:'+pct+'%;background:'+fillColor+'"></span></span>'+pct+'%</td>'+
-      '</tr>';
-  }).join('');
+// ===== SCORE GRID =====
+function renderScoreGrid(svc,dimKey){
+  var dims=svc[dimKey]||[];
+  return '<table class="score-grid-table"><thead><tr><th>维度</th><th>状态</th><th>得分</th></tr></thead><tbody>'+dims.map(function(d){
+    var p=pct(d.score),fc=p>=80?'var(--green-text)':p>=40?'var(--amber-text)':'var(--red-text)';
+    return '<tr><td>'+esc(d.name)+'</td><td>'+stPill(d.status)+'</td><td><span class="score-bar-mini"><span class="score-bar-mini-fill" style="width:'+p+'%;background:'+fc+'"></span></span>'+p+'%</td></tr>';
+  }).join('')+'</tbody></table>';
 }
 
-// ===== 手风琴详情 =====
-function renderAccordion(containerId,dimensions){
-  var container=document.getElementById(containerId);
-  var statusLabels={present:'已具备',partial:'部分具备',missing:'缺失'};
-  var html='';
-  dimensions.forEach(function(d,idx){
-    html+='<div class="accordion-item">'+
-      '<button class="accordion-header" aria-expanded="false" aria-controls="acc-panel-'+containerId+'-'+idx+'" onclick="toggleAccordion(this)">'+
-      '<span class="left"><span class="arrow">&#9654;</span> '+escHtml(d.name)+' <span class="status-pill '+d.status+'">'+
-        (statusLabels[d.status]||d.status)+
-      '</span></span>'+
-      '<span class="muted">'+(d.evidence?d.evidence.length:0)+' 条证据</span>'+
-      '</button>'+
-      '<div class="accordion-panel" id="acc-panel-'+containerId+'-'+idx+'">'+
-      '<div class="accordion-panel-inner">';
-    if(d.summary){
-      html+='<div style="font-size:.82rem;margin-bottom:8px">'+escHtml(d.summary)+'</div>';
-    }
-    if(d.evidence&&d.evidence.length){
-      d.evidence.forEach(function(e){
-        html+='<div class="evidence-item"><span class="evidence-file">'+escHtml(e.file||'')+'</span> <span class="evidence-snippet">'+escHtml(e.snippet||'')+'</span></div>';
-      });
-    }else{
-      html+='<div class="muted">未找到相关代码证据。</div>';
-    }
-    if(d.recommendations&&d.recommendations.length){
-      d.recommendations.forEach(function(r){
-        html+='<div class="recommendation">&#128161; '+escHtml(r)+'</div>';
-      });
-    }
+// ===== ACCORDION =====
+function renderAccordion(svc,dimKey){
+  var dims=svc[dimKey]||[];
+  return '<div class="accordion">'+dims.map(function(d,idx){
+    var id='acc-'+dimKey+'-'+idx+'-'+(svc.name||'');
+    var html='<div class="accordion-item"><button class="accordion-header" aria-expanded="false" onclick="var p=document.getElementById(\''+id+'\');var ex=this.getAttribute(\'aria-expanded\')===\'true\';this.setAttribute(\'aria-expanded\',!ex);p.style.maxHeight=ex?\'0\':p.scrollHeight+\'px\'"><span><span class="arrow">&#9654;</span> '+esc(d.name)+' '+stPill(d.status)+'</span><span class="muted">'+(d.evidence?d.evidence.length:0)+' 条证据</span></button><div class="accordion-panel" id="'+id+'"><div class="accordion-panel-inner">';
+    if(d.summary)html+='<div style="font-size:.8rem;margin-bottom:6px">'+esc(d.summary)+'</div>';
+    if(d.evidence&&d.evidence.length){d.evidence.forEach(function(e){html+='<div class="evidence-item"><span class="evidence-file">'+esc(e.file||'')+'</span><span class="evidence-snippet">'+esc(e.snippet||'')+'</span></div>';});}
+    else html+='<div class="muted">未找到相关代码证据。</div>';
+    if(d.recommendations&&d.recommendations.length){d.recommendations.forEach(function(r){html+='<div class="recommendation">&#128161; '+esc(r)+'</div>';});}
     html+='</div></div></div>';
-  });
-  container.innerHTML=html;
+    return html;
+  }).join('')+'</div>';
 }
 
-function toggleAccordion(btn){
-  var expanded=btn.getAttribute('aria-expanded')==='true';
-  btn.setAttribute('aria-expanded',!expanded);
-  var panel=document.getElementById(btn.getAttribute('aria-controls'));
-  if(panel){
-    panel.style.maxHeight=expanded?'0':panel.scrollHeight+'px';
-  }
+// ===== RISK SUMMARY =====
+function renderRiskSummary(svc){
+  var all=[];
+  (svc.genericDFX||[]).forEach(function(d){d.cat='通用DFX';all.push(d)});
+  (svc.businessDFX||[]).forEach(function(d){d.cat='业务DFX';all.push(d)});
+  var cm={'2.5':'高','2.7':'中','2.6':'中','2.3':'中','2.9':'中','2.13':'中','3.4':'高','3.5':'高','3.3':'高','3.2':'高','3.1':'高','3.10':'中','3.8':'中'};
+  var o={missing:0,partial:1,present:2},co={高:0,中:1,低:2};
+  all.sort(function(a,b){var ca=cm[a.id]||'低',cb=cm[b.id]||'低';if(a.status!==b.status)return o[a.status]-o[b.status];return co[ca]-co[cb]});
+  all=all.filter(function(d){return d.status!=='present'});
+  if(!all.length) return '<p style="color:var(--green-text);padding:12px;text-align:center">所有维度已具备，未发现风险项。</p>';
+  var imp={'3.4':'跨服务数据一致性','3.5':'高并发崩溃风险','3.3':'支付重复/丢失','3.2':'超卖/库存泄漏','3.1':'订单重复','2.5':'级联故障','2.7':'瞬态故障持久化','2.6':'脏数据/DB压力','3.10':'请求挂起','2.3':'生产不可观测','2.9':'线程池耗尽','2.13':'接口滥用','3.8':'业务异常发现延迟','2.1':'无法排查问题','2.2':'错误响应不一致','2.4':'K8s无法检测不健康Pod','2.8':'无法关联跨服务请求','2.10':'配置变更需重启','2.11':'API变更破坏下游','2.12':'部署时请求丢失','3.6':'订单卡中间状态','3.7':'单一服务商依赖','3.9':'无法分析转化流失','3.11':'系统间数据漂移'};
+  return '<table class="risk-table"><thead><tr><th>风险</th><th>维度</th><th>状态</th><th>影响</th></tr></thead><tbody>'+all.slice(0,15).map(function(d){var c=cm[d.id]||'低';return '<tr><td><span class="criticality '+(c==='高'?'high':c==='中'?'medium':'low')+'">'+c+'</span></td><td>'+esc(d.name)+' <span class="muted">('+d.id+')</span></td><td>'+stPill(d.status)+'</td><td class="muted">'+(imp[d.id]||'存在生产风险')+'</td></tr>';}).join('')+'</tbody></table>';
 }
 
-// ===== 风险汇总 =====
-function renderRiskSummary(){
-  var allDims=[];
-  (R.genericDFX||[]).forEach(function(d){d.category='通用 DFX';allDims.push(d)});
-  (R.businessDFX||[]).forEach(function(d){d.category='业务 DFX';allDims.push(d)});
-
-  // 风险等级映射
-  var critMap={
-    '2.5':'高','2.7':'中','2.6':'中','2.3':'中','2.9':'中','2.13':'中',
-    '3.4':'高','3.5':'高','3.3':'高','3.2':'高','3.1':'高',
-    '3.10':'中','3.8':'中',
-    '2.1':'低','2.2':'低','2.4':'低','2.8':'低','2.10':'低','2.11':'低','2.12':'低',
-    '3.6':'低','3.7':'低','3.9':'低','3.11':'低'
-  };
-  var critLabels={高:'&#128308; 高',中:'&#128993; 中',低:'&#128994; 低'};
-  var statusLabels={present:'已具备',partial:'部分具备',missing:'缺失'};
-
-  // 排序：缺失优先，再按风险等级
-  var order={missing:0,partial:1,present:2};
-  var critOrder={高:0,中:1,低:2};
-  allDims.sort(function(a,b){
-    var ca=critMap[a.id]||'低',cb=critMap[b.id]||'低';
-    var oa=order[a.status]||2,ob=order[b.status]||2;
-    if(a.status!==b.status) return oa-ob;
-    if(ca!==cb) return critOrder[ca]-critOrder[cb];
-    return a.name.localeCompare(b.name);
-  });
-
-  // 仅显示非已具备项
-  allDims=allDims.filter(function(d){return d.status!=='present'});
-  if(!allDims.length){
-    document.getElementById('risk-table-body').innerHTML=
-      '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--green-text)">所有维度已具备，未发现风险项。</td></tr>';
-    return;
-  }
-
-  var impacts={
-    '3.4':'跨服务数据一致性无法保证',
-    '3.5':'高并发场景下系统崩溃风险',
-    '3.3':'支付重复或丢失',
-    '3.2':'超卖或库存泄漏',
-    '3.1':'订单重复提交',
-    '2.5':'级联故障导致全链路不可用',
-    '2.7':'瞬态故障变为持久失败',
-    '2.6':'脏数据与数据库压力',
-    '3.10':'降级场景下请求挂起',
-    '2.3':'生产环境无可观测性',
-    '2.9':'线程池耗尽',
-    '2.13':'接口滥用与未授权访问',
-    '3.8':'业务异常发现延迟',
-    '2.1':'生产问题无法排查',
-    '2.2':'错误响应不一致',
-    '2.4':'K8s 无法检测不健康 Pod',
-    '2.8':'无法跨服务关联请求',
-    '2.10':'配置变更需重启',
-    '2.11':'API 变更破坏下游消费者',
-    '2.12':'部署时在途请求丢失',
-    '3.6':'订单卡在中间状态',
-    '3.7':'单一服务商依赖',
-    '3.9':'无法分析转化流失',
-    '3.11':'系统间数据漂移无法发现'
-  };
-
-  document.getElementById('risk-table-body').innerHTML=allDims.slice(0,15).map(function(d){
-    var crit=critMap[d.id]||'低';
-    return '<tr>'+
-      '<td><span class="criticality '+(crit==='高'?'high':crit==='中'?'medium':'low')+'">'+(critLabels[crit]||crit)+'</span></td>'+
-      '<td>'+escHtml(d.name)+' <span class="muted">('+d.id+')</span></td>'+
-      '<td><span class="status-pill '+d.status+'">'+(statusLabels[d.status]||d.status)+'</span></td>'+
-      '<td class="muted">'+ (impacts[d.id]||'存在生产风险') +'</td>'+
-      '</tr>';
-  }).join('');
-}
-
-// ===== 改造路线图 =====
-function renderRemediation(){
-  var items=R.remediation||[];
-  if(!items.length){document.getElementById('remediation-section').style.display='none';return;}
-  document.getElementById('remediation-section').style.display='block';
-
+// ===== REMEDIATION =====
+function renderRemediation(svc){
+  var items=svc.remediation||[];
+  if(!items.length) return '';
   var phases={p0:[],p1:[],p2:[]};
-  items.forEach(function(it){
-    var key=(it.priority||'P2').toLowerCase().substring(0,2);
-    if(!phases[key]) phases[key]=[];
-    phases[key].push(it);
-  });
-
-  var phaseLabels={p0:'P0 快速见效',p1:'P1 核心加固',p2:'P2 持续完善'};
-  var phaseIcons={p0:'&#9889;',p1:'&#128737;',p2:'&#128260;'};
-  var phaseBadges={p0:'phase-badge-p0',p1:'phase-badge-p1',p2:'phase-badge-p2'};
-  var cardClasses={p0:'p0-card',p1:'p1-card',p2:'p2-card'};
-
-  ['p0','p1','p2'].forEach(function(key){
-    var div=document.getElementById('phase-'+key);
-    var list=phases[key]||[];
-    if(!list.length){div.innerHTML='';return;}
-    var html='<div class="phase-header">'+
-      '<span class="phase-badge '+phaseBadges[key]+'">'+phaseIcons[key]+' '+phaseLabels[key]+'</span>'+
-      '<span class="muted">'+list.length+' 项</span></div>'+
-      '<div class="remediation-grid">';
-    list.forEach(function(it){
-      html+='<div class="remediation-card '+cardClasses[key]+'">'+
-        '<div class="rc-dim">'+escHtml(it.dimensionId||'')+' &middot; '+escHtml(it.dimensionName||'')+'</div>'+
-        '<div class="rc-action">'+escHtml(it.action||'')+'</div>'+
-        (it.targetFiles&&it.targetFiles.length?
-          '<div class="rc-files">涉及文件：'+
-          it.targetFiles.map(function(f){return '<code>'+escHtml(f)+'</code>';}).join('')+
-          '</div>':'')+
-        '<div class="rc-effort">&#9200; 预计工作量：'+escHtml(it.effort||'')+'</div>'+
-        (it.impact?'<div class="rc-impact">&#9989; '+escHtml(it.impact)+'</div>':'')+
-        '</div>';
-    });
-    html+='</div>';
-    div.innerHTML=html;
-  });
-
-  // Quick start: show up to 3 P0 items
+  items.forEach(function(it){var k=(it.priority||'P2').toLowerCase().substring(0,2);if(!phases[k])phases[k]=[];phases[k].push(it);});
+  var labels={p0:'P0 快速见效',p1:'P1 核心加固',p2:'P2 持续完善'};
+  var icons={p0:'&#9889;',p1:'&#128737;',p2:'&#128260;'};
+  var bcls={p0:'phase-badge-p0',p1:'phase-badge-p1',p2:'phase-badge-p2'};
+  var ccls={p0:'p0-card',p1:'p1-card',p2:'p2-card'};
+  var html='';
+  // Quick start
   var p0=phases.p0||[];
-  var qs=document.getElementById('quick-start');
-  var qsList=document.getElementById('quick-start-list');
   if(p0.length){
-    qs.style.display='block';
-    qsList.innerHTML=p0.slice(0,3).map(function(it){
-      return '<li>'+
-        '<span class="qs-action">'+escHtml(it.action||'')+'</span>'+
-        (it.targetFiles&&it.targetFiles.length?
-          ' <span class="qs-file">'+escHtml(it.targetFiles[0])+'</span>':'')+
-        ' <span class="qs-effort">'+(it.effort||'')+'</span>'+
-        '</li>';
-    }).join('');
-  }else{
-    qs.style.display='none';
+    html+='<div class="quick-start"><h4>&#128204; 首先做这三件事</h4><ol>';
+    p0.slice(0,3).forEach(function(it){html+='<li><b>'+esc(it.action||'')+'</b> <span class="qs-file">'+(it.targetFiles&&it.targetFiles.length?it.targetFiles[0]:'')+'</span> <span class="muted">'+esc(it.effort||'')+'</span></li>';});
+    html+='</ol></div>';
   }
+  ['p0','p1','p2'].forEach(function(key){
+    var list=phases[key]||[];
+    if(!list.length) return;
+    html+='<div class="remediation-phase"><div class="phase-header"><span class="'+bcls[key]+'">'+icons[key]+' '+labels[key]+'</span> <span class="muted">'+list.length+' 项</span></div><div class="remediation-grid">';
+    list.forEach(function(it){
+      html+='<div class="remediation-card '+ccls[key]+'"><div class="rc-dim">'+esc(it.dimensionId||'')+' &middot; '+esc(it.dimensionName||'')+'</div><div class="rc-action">'+esc(it.action||'')+'</div>'+(it.targetFiles&&it.targetFiles.length?'<div class="rc-files">涉及：'+it.targetFiles.map(function(f){return '<code>'+esc(f)+'</code>'}).join('')+'</div>':'')+'<div class="rc-effort">&#9200; '+esc(it.effort||'')+'</div>'+(it.impact?'<div class="rc-impact">'+esc(it.impact)+'</div>':'')+'</div>';
+    });
+    html+='</div></div>';
+  });
+  return html;
 }
 
-// ===== 渲染全部 =====
+// ===== PER-SERVICE FULL RENDER =====
+function renderServiceDetail(svc){
+  var glabels=['日志诊断','异常处理','指标监控','健康检查','熔断限流','缓存','重试','链路追踪','异步线程','配置管理','API版本','优雅关闭','安全DFX'];
+  var blabels=['订单幂等','库存锁','支付事务','分布式事务','秒杀防护','状态机','第三方降级','业务告警','漏斗追踪','超时管理','数据对账'];
+  var h='';
+  h+=renderScoreHero(svc);
+  h+='<h2 class="section-title">业务领域</h2>'+renderLandscape(svc);
+  h+='<h2 class="section-title">DFX 维度总览</h2><div class="grid-2col">';
+  h+='<div class="panel"><h3>通用 DFX（13 维度）</h3><svg id="radar-g-'+svc.name+'" viewBox="0 0 300 300" style="width:100%;max-width:360px;display:block;margin:0 auto"></svg></div>';
+  h+='<div class="panel"><h3>业务 DFX（11 维度）</h3><svg id="radar-b-'+svc.name+'" viewBox="0 0 300 300" style="width:100%;max-width:360px;display:block;margin:0 auto"></svg></div>';
+  h+='</div>';
+  h+='<h2 class="section-title">评分明细</h2><div class="grid-2col"><div class="panel"><h3>通用 DFX</h3>'+renderScoreGrid(svc,'genericDFX')+'</div><div class="panel"><h3>业务 DFX</h3>'+renderScoreGrid(svc,'businessDFX')+'</div></div>';
+  h+='<h2 class="section-title">详细发现</h2><div class="grid-2col"><div class="panel"><h3>通用 DFX 详情</h3>'+renderAccordion(svc,'genericDFX')+'</div><div class="panel"><h3>业务 DFX 详情</h3>'+renderAccordion(svc,'businessDFX')+'</div></div>';
+  h+='<h2 class="section-title">风险汇总</h2><div class="panel">'+renderRiskSummary(svc)+'</div>';
+  h+='<h2 class="section-title">改造路线图</h2>'+renderRemediation(svc);
+  return h;
+}
+function renderServiceDetailPost(svc){
+  var glabels=['日志诊断','异常处理','指标监控','健康检查','熔断限流','缓存','重试','链路追踪','异步线程','配置管理','API版本','优雅关闭','安全DFX'];
+  var blabels=['订单幂等','库存锁','支付事务','分布式事务','秒杀防护','状态机','第三方降级','业务告警','漏斗追踪','超时管理','数据对账'];
+  renderRadar('radar-g-'+svc.name,svc.genericDFX||[],glabels,'#6366f1');
+  renderRadar('radar-b-'+svc.name,svc.businessDFX||[],blabels,'#8b5cf6');
+}
+
+// ===== OVERVIEW (MULTI-SERVICE) =====
+function renderOverview(){
+  var svcs=R.services||[];
+  var glabels=['日志诊断','异常处理','指标监控','健康检查','熔断限流','缓存','重试','链路追踪','异步线程','配置管理','API版本','优雅关闭','安全DFX'];
+  var blabels=['订单幂等','库存锁','支付事务','分布式事务','秒杀防护','状态机','第三方降级','业务告警','漏斗追踪','超时管理','数据对账'];
+  var colors=['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#ec4899','#14b8a6'];
+
+  var h='<h2 class="section-title">跨服务 DFX 对比</h2>';
+
+  // Overall scores ranking
+  h+='<div class="grid-2col">';
+  h+='<div class="panel"><h3>综合排名</h3><table class="ranking-table"><thead><tr><th>#</th><th>服务</th><th>综合</th><th>通用</th><th>业务</th></tr></thead><tbody>';
+  var ranked=svcs.slice().sort(function(a,b){return (b.scores.overall||0)-(a.scores.overall||0)});
+  ranked.forEach(function(s,idx){
+    var o=s.scores.overall||0,op=pct(o);
+    var bgColor=op>=80?'#22c55e':op>=60?'#eab308':op>=40?'#f97316':'#ef4444';
+    h+='<tr><td class="rank-num" style="color:'+bgColor+'">'+(idx+1)+'</td><td>'+esc(s.name)+'</td><td><span class="ranking-bar-bg"><span class="ranking-bar-fill" style="width:'+op+'%;background:'+bgColor+'"></span></span>'+op+'%</td><td>'+pct(s.scores.genericDFX)+'%</td><td>'+pct(s.scores.businessDFX)+'%</td></tr>';
+  });
+  h+='</tbody></table></div>';
+
+  // Overlay radar — generic
+  h+='<div class="panel"><h3>通用 DFX 对比</h3><svg id="radar-overlay-g" viewBox="0 0 300 300" style="width:100%;max-width:360px;display:block;margin:0 auto"></svg></div>';
+  h+='</div>';
+
+  // Common gaps
+  var gapMap={};
+  svcs.forEach(function(svc){
+    (svc.genericDFX||[]).concat(svc.businessDFX||[]).forEach(function(d){
+      if(d.status==='missing'||d.status==='partial'){
+        if(!gapMap[d.id]) gapMap[d.id]={name:d.name,count:0};
+        gapMap[d.id].count++;
+      }
+    });
+  });
+  var gaps=Object.keys(gapMap).map(function(k){return{id:k,name:gapMap[k].name,count:gapMap[k].count}}).sort(function(a,b){return b.count-a.count}).slice(0,8);
+  if(gaps.length){
+    h+='<h2 class="section-title">共性缺口</h2><div class="panel">';
+    gaps.forEach(function(g){
+      var cls=g.count===svcs.length?'all':'most';
+      h+='<span class="gap-tag '+cls+'">'+esc(g.name)+' ('+g.count+'/'+svcs.length+')</span>';
+    });
+    h+='</div>';
+  }
+
+  // Per-service minicards
+  h+='<h2 class="section-title">各服务概况</h2><div class="grid-2col">';
+  svcs.forEach(function(svc,idx){
+    var c=colors[idx%colors.length],o=pct(svc.scores.overall);
+    h+='<div class="panel" style="border-left:3px solid '+c+'"><h3>'+esc(svc.name)+'</h3><div class="score-hero small">'+
+      '<div style="width:130px;text-align:center"><svg viewBox="0 0 240 240" width="110" height="110">'+
+      drawArc(120,130,85,'var(--border-color)',-220,40,10)+
+      drawArc(120,130,85,c,-220,-220+260*svc.scores.overall,10)+
+      '<text x="120" y="115" text-anchor="middle" font-size="38" font-weight="800" fill="'+c+'">'+o+'%</text>'+
+      '</svg></div>'+
+      '<div><div style="font-size:.8rem;margin-bottom:4px">'+esc(svc.totalJavaFiles||0)+' 个 Java 文件 | '+(svc.businessDomains||[]).filter(function(x){return x.detected}).length+' 个业务域</div>'+
+      '<div style="font-size:.75rem;color:var(--text-muted)"><b>缺失项:</b> '+((svc.genericDFX||[]).concat(svc.businessDFX||[]).filter(function(d){return d.status==='missing'}).length)+' | <b>部分:</b> '+((svc.genericDFX||[]).concat(svc.businessDFX||[]).filter(function(d){return d.status==='partial'}).length)+'</div>'+
+      '</div></div>';
+  });
+  h+='</div>';
+
+  // Render overlay radars
+  setTimeout(function(){
+    renderOverlayRadar('radar-overlay-g',svcs,'genericDFX',glabels);
+  },10);
+  return h;
+}
+
+// ===== TAB SWITCHING =====
+function switchTab(idx){
+  ACTIVE_TAB=idx;
+  var svcs=R.services||[];
+  // Update tab buttons
+  var btns=document.querySelectorAll('.tab-btn');
+  btns.forEach(function(b,i){b.classList.toggle('active',i===idx)});
+  // Render
+  var ct=document.getElementById('tab-content');
+  if(idx===0){
+    ct.innerHTML=renderOverview();
+  }else{
+    var svc=svcs[idx-1];
+    ct.innerHTML=renderServiceDetail(svc);
+    setTimeout(function(){renderServiceDetailPost(svc)},20);
+  }
+  window.scrollTo(0,0);
+}
+
+// ===== RENDER ALL =====
 function renderAll(){
-  renderScoreHero();
-  renderLandscape();
+  var svcs=R.services||[];
+  var isMulti=svcs.length>1;
+  document.getElementById('tab-nav').innerHTML=isMulti?
+    (function(){
+      var h='<button class="tab-btn active" onclick="switchTab(0)">&#127760; 服务总览</button>';
+      svcs.forEach(function(s,i){h+='<button class="tab-btn" onclick="switchTab('+(i+1)+')">'+esc(s.name)+' <span class="badge">'+pct(s.scores.overall)+'%</span></button>';});
+      return h;
+    })():'';
 
-  // 雷达图中文标签
-  var genericLabels=[
-    '日志诊断','异常处理','指标监控','健康检查','熔断限流',
-    '缓存','重试','链路追踪','异步线程','配置管理',
-    'API版本','优雅关闭','安全DFX'
-  ];
-  var businessLabels=[
-    '订单幂等','库存锁','支付事务','分布式事务','秒杀防护',
-    '状态机','第三方降级','业务告警','漏斗追踪','超时管理',
-    '数据对账'
-  ];
-  renderRadar('radar-generic',R.genericDFX||[],genericLabels);
-  renderRadar('radar-business',R.businessDFX||[],businessLabels);
-
-  renderScoreGrid('grid-generic',R.genericDFX||[]);
-  renderScoreGrid('grid-business',R.businessDFX||[]);
-  renderAccordion('accordion-generic',R.genericDFX||[]);
-  renderAccordion('accordion-business',R.businessDFX||[]);
-  renderRiskSummary();
-  renderRemediation();
+  var ct=document.getElementById('tab-content');
+  if(isMulti){
+    ct.innerHTML=renderOverview();
+  }else{
+    ct.innerHTML=renderServiceDetail(svcs[0]||{});
+    if(svcs[0]) setTimeout(function(){renderServiceDetailPost(svcs[0])},20);
+  }
 }
 
 renderAll();
 </script>
-
 </body>
 </html>
