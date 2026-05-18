@@ -271,11 +271,30 @@ springBootVersion、springCloudVersion、mainClass（主类）、packageRoots（
   ],
   "scores": {
     "overall": 0.0, "genericDFX": 0.0, "businessDFX": 0.0, "landscapeCoverage": 0.0
-  }
+  },
+  "remediation": [
+    {
+      "priority": "P0|P1|P2",
+      "phase": "快速见效|核心加固|持续完善",
+      "dimensionId": "2.1",
+      "dimensionName": "维度名",
+      "action": "具体改造动作",
+      "targetFiles": ["文件路径"],
+      "codePattern": "代码示例",
+      "effort": "工作量预估",
+      "impact": "改造效果"
+    }
+  ]
 }
 ```
 
-2. **读取** skill 目录下的 `references/dashboard-template.html`。
+2. **生成改造路线图（remediation 数组）**：遍历所有标记为"partial"或"missing"的维度，参考 `analysis-framework.md` 中"四、改造优先级与工作量指引"，为每个维度生成一条 remediation 条目。规则：
+   - `priority`: 从分析框架中的改造指引获取
+   - `targetFiles`: 优先使用实际扫描到的证据文件；证据不足时使用 `analysis-framework.md` 指引中的典型代码位置
+   - `codePattern`: 优先从证据片段提取实际代码模式；不足时使用分析框架中的标准代码示例
+   - 排序：P0 → P1 → P2，同一优先级内按风险等级 HIGH → MEDIUM → LOW
+
+3. **读取** skill 目录下的 `references/dashboard-template.html`。
 
 3. **替换**模板中的 `__REPORT_DATA__` 占位符为 JSON 字符串。
    JSON 转义注意事项：

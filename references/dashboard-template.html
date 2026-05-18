@@ -230,6 +230,45 @@ body{
   border-top:1px solid var(--border-color);margin-top:40px;
 }
 
+/* ===== Remediation Roadmap ===== */
+.remediation-phase{margin-bottom:20px}
+.phase-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:.95rem;font-weight:700}
+.phase-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 12px;border-radius:999px;font-size:.75rem;font-weight:700}
+.phase-badge-p0{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.phase-badge-p1{background:#e0e7ff;color:#3730a3;border:1px solid #c7d2fe}
+.phase-badge-p2{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+[data-theme="dark"] .phase-badge-p0{background:#422006;color:#fbbf24;border-color:#78350f}
+[data-theme="dark"] .phase-badge-p1{background:#1e1b4b;color:#818cf8;border-color:#3730a3}
+[data-theme="dark"] .phase-badge-p2{background:#022c22;color:#4ade80;border-color:#064e3b}
+.remediation-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.remediation-card{
+  background:var(--bg-card);border:1px solid var(--border-color);
+  border-radius:var(--radius-sm);padding:14px;
+  box-shadow:var(--shadow-sm);transition:all .15s;
+  position:relative;overflow:hidden;
+}
+.remediation-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.remediation-card.p0-card::before{background:#eab308}
+.remediation-card.p1-card::before{background:#6366f1}
+.remediation-card.p2-card::before{background:#22c55e}
+.remediation-card:hover{box-shadow:var(--shadow-md)}
+.remediation-card .rc-dim{font-size:.7rem;color:var(--text-muted);margin-bottom:4px;font-family:monospace}
+.remediation-card .rc-action{font-size:.85rem;font-weight:600;margin-bottom:6px}
+.remediation-card .rc-files{font-size:.75rem;color:var(--text-secondary);margin-bottom:6px}
+.remediation-card .rc-files code{font-family:monospace;font-size:.7rem;background:var(--bg-primary);padding:1px 5px;border-radius:3px;display:inline-block;margin:1px 2px 1px 0}
+.remediation-card .rc-effort{font-size:.73rem;color:var(--text-muted)}
+.remediation-card .rc-impact{font-size:.73rem;color:var(--green-text);margin-top:4px}
+.quick-start{
+  margin-top:24px;padding:20px;background:var(--accent-light);
+  border-radius:var(--radius);border:1px solid var(--accent);
+}
+.quick-start h4{font-size:.9rem;font-weight:700;margin-bottom:12px;color:var(--accent)}
+.quick-start ol{padding-left:20px;margin:0}
+.quick-start li{font-size:.85rem;padding:6px 0;color:var(--text-primary)}
+.quick-start li .qs-action{font-weight:600}
+.quick-start li .qs-file{font-family:monospace;font-size:.78rem;color:var(--accent)}
+.quick-start li .qs-effort{font-size:.75rem;color:var(--text-muted);margin-left:8px}
+
 /* ===== Utility ===== */
 .muted{color:var(--text-muted);font-size:.8rem}
 .text-center{text-align:center}
@@ -330,6 +369,18 @@ body{
     <thead><tr><th>风险等级</th><th>维度</th><th>状态</th><th>影响</th></tr></thead>
     <tbody id="risk-table-body"></tbody>
   </table>
+</div>
+
+<!-- ===== 改造路线图 ===== -->
+<div id="remediation-section" style="display:none">
+<h2 class="section-title">改造路线图</h2>
+  <div id="quick-start" class="quick-start" style="display:none">
+    <h4>&#128204; 首先做这三件事</h4>
+    <ol id="quick-start-list"></ol>
+  </div>
+  <div class="remediation-phase" id="phase-p0"></div>
+  <div class="remediation-phase" id="phase-p1"></div>
+  <div class="remediation-phase" id="phase-p2"></div>
 </div>
 
 <!-- ===== FOOTER ===== -->
@@ -642,6 +693,67 @@ function renderRiskSummary(){
   }).join('');
 }
 
+// ===== 改造路线图 =====
+function renderRemediation(){
+  var items=R.remediation||[];
+  if(!items.length){document.getElementById('remediation-section').style.display='none';return;}
+  document.getElementById('remediation-section').style.display='block';
+
+  var phases={p0:[],p1:[],p2:[]};
+  items.forEach(function(it){
+    var key=(it.priority||'P2').toLowerCase().substring(0,2);
+    if(!phases[key]) phases[key]=[];
+    phases[key].push(it);
+  });
+
+  var phaseLabels={p0:'P0 快速见效',p1:'P1 核心加固',p2:'P2 持续完善'};
+  var phaseIcons={p0:'&#9889;',p1:'&#128737;',p2:'&#128260;'};
+  var phaseBadges={p0:'phase-badge-p0',p1:'phase-badge-p1',p2:'phase-badge-p2'};
+  var cardClasses={p0:'p0-card',p1:'p1-card',p2:'p2-card'};
+
+  ['p0','p1','p2'].forEach(function(key){
+    var div=document.getElementById('phase-'+key);
+    var list=phases[key]||[];
+    if(!list.length){div.innerHTML='';return;}
+    var html='<div class="phase-header">'+
+      '<span class="phase-badge '+phaseBadges[key]+'">'+phaseIcons[key]+' '+phaseLabels[key]+'</span>'+
+      '<span class="muted">'+list.length+' 项</span></div>'+
+      '<div class="remediation-grid">';
+    list.forEach(function(it){
+      html+='<div class="remediation-card '+cardClasses[key]+'">'+
+        '<div class="rc-dim">'+escHtml(it.dimensionId||'')+' &middot; '+escHtml(it.dimensionName||'')+'</div>'+
+        '<div class="rc-action">'+escHtml(it.action||'')+'</div>'+
+        (it.targetFiles&&it.targetFiles.length?
+          '<div class="rc-files">涉及文件：'+
+          it.targetFiles.map(function(f){return '<code>'+escHtml(f)+'</code>';}).join('')+
+          '</div>':'')+
+        '<div class="rc-effort">&#9200; 预计工作量：'+escHtml(it.effort||'')+'</div>'+
+        (it.impact?'<div class="rc-impact">&#9989; '+escHtml(it.impact)+'</div>':'')+
+        '</div>';
+    });
+    html+='</div>';
+    div.innerHTML=html;
+  });
+
+  // Quick start: show up to 3 P0 items
+  var p0=phases.p0||[];
+  var qs=document.getElementById('quick-start');
+  var qsList=document.getElementById('quick-start-list');
+  if(p0.length){
+    qs.style.display='block';
+    qsList.innerHTML=p0.slice(0,3).map(function(it){
+      return '<li>'+
+        '<span class="qs-action">'+escHtml(it.action||'')+'</span>'+
+        (it.targetFiles&&it.targetFiles.length?
+          ' <span class="qs-file">'+escHtml(it.targetFiles[0])+'</span>':'')+
+        ' <span class="qs-effort">'+(it.effort||'')+'</span>'+
+        '</li>';
+    }).join('');
+  }else{
+    qs.style.display='none';
+  }
+}
+
 // ===== 渲染全部 =====
 function renderAll(){
   renderScoreHero();
@@ -666,6 +778,7 @@ function renderAll(){
   renderAccordion('accordion-generic',R.genericDFX||[]);
   renderAccordion('accordion-business',R.businessDFX||[]);
   renderRiskSummary();
+  renderRemediation();
 }
 
 renderAll();

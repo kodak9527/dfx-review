@@ -384,3 +384,134 @@
 **中风险**：熔断(2.5)、重试(2.7)、缓存(2.6)、超时管理(3.10)、指标监控(2.3)、异步线程(2.9)、安全DFX(2.13)、业务告警(3.8)
 
 **低风险**：日志(2.1)、异常(2.2)、健康检查(2.4)、链路追踪(2.8)、配置管理(2.10)、API版本(2.11)、优雅关闭(2.12)、状态机(3.6)、第三方降级(3.7)、漏斗(3.9)、对账(3.11)
+
+---
+
+## 四、改造优先级与工作量指引
+
+为扫描出的缺失/部分具备维度提供改造建议。Claude 生成报告时，会参考下表为每个待改进项标注优先级、工作量和代码示例。
+
+### 优先级定义
+
+| 优先级 | 含义 | 建议时间 |
+|--------|------|---------|
+| **P0 — 快速见效** | 改动量小（1-3 行配置/注解），收益立竿见影 | 30min - 2h |
+| **P1 — 核心加固** | 涉及核心能力建设，需要一定的代码改造量 | 2h - 1d |
+| **P2 — 持续完善** | 涉及框架引入或架构级改造，需较大投入 | 1d - 1w+ |
+
+### 通用 DFX 维度改造指引
+
+**2.1 日志与诊断 — P0**
+- 标准改动：Service 类添加 `@Slf4j` 注解；Filter 中添加 `MDC.put("traceId", traceId)`；`logback-spring.xml` 配置 LogstashEncoder
+- 代码示例：`@Slf4j` → 自动注入 `log` 字段
+- 依赖项：Lombok 依赖、logback-encoder 依赖
+
+**2.2 异常处理 — P0**
+- 标准改动：创建 `GlobalExceptionHandler` 类（`@RestControllerAdvice`），定义 `BusinessException` 基类，创建 `ErrorResponse` DTO
+- 代码示例：`@ExceptionHandler(BusinessException.class) public ErrorResponse handleBiz(BusinessException e) { ... }`
+- 依赖项：无
+
+**2.3 指标监控 — P1**
+- 标准改动：API 入口添加 `@Timed`，关键业务点增加 `Counter` 打点，配置 Prometheus Registry
+- 代码示例：`@Timed(value = "order.create", percentiles = {0.5, 0.95, 0.99})`
+- 依赖项：`micrometer-registry-prometheus` 依赖
+
+**2.4 健康检查 — P1**
+- 标准改动：为每个外部依赖（DB/Redis/MQ）创建 `HealthIndicator`，启用 liveness/readiness 探针
+- 代码示例：`class DatabaseHealthIndicator implements HealthIndicator { ... }`
+- 依赖项：`spring-boot-starter-actuator` 依赖
+
+**2.5 熔断与韧性 — P1**
+- 标准改动：对外部 HTTP/Feign 调用添加 `@CircuitBreaker`，为每个远程服务实现 fallback 方法
+- 代码示例：`@CircuitBreaker(name = "paymentGateway", fallbackMethod = "fallbackPay") public PayResponse pay(PayRequest req) { ... }`
+- 依赖项：`spring-cloud-starter-circuitbreaker-resilience4j`
+
+**2.6 缓存 — P1**
+- 标准改动：读多写少的方法上加 `@Cacheable`，更新方法上加 `@CacheEvict`，配置 Redis TTL
+- 代码示例：`@Cacheable(value = "products", key = "#id", sync = true)`
+- 依赖项：`spring-boot-starter-cache`、Redis
+
+**2.7 重试 — P0**
+- 标准改动：幂等的远程调用或 DB 操作上加 `@Retryable`，定义 `@Recover` 兜底方法
+- 代码示例：`@Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))`
+- 依赖项：`spring-retry` 依赖
+
+**2.8 链路追踪 — P2**
+- 标准改动：添加 OpenTelemetry 依赖，配置 OTLP exporter，`@WithSpan` 标注关键方法
+- 代码示例：`@WithSpan("order.service.create") public Order createOrder(CreateOrderRequest req) { ... }`
+- 依赖项：`opentelemetry-spring-boot-starter`、Jaeger/Zipkin 后端
+
+**2.9 异步线程池 — P1**
+- 标准改动：配置 `ThreadPoolTaskExecutor` Bean，`@Async("taskExecutor")` 使用指定线程池
+- 代码示例：`ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor(); executor.setCorePoolSize(10); executor.setMaxPoolSize(20); executor.setQueueCapacity(200); executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());`
+- 依赖项：无
+
+**2.10 配置管理 — P0**
+- 标准改动：将 `@Value` 替换为 `@ConfigurationProperties`，添加 `@Validated` 校验
+- 代码示例：`@ConfigurationProperties(prefix = "order") @Validated public class OrderProperties { @Min(1) private int timeout; }`
+- 依赖项：spring-boot-starter-validation
+
+**2.11 API 版本化 — P2**
+- 标准改动：确定版本策略（URL 路径或 Header），添加 @Deprecated 标记
+- 代码示例：`@RequestMapping("/api/v1/orders")` + `@Deprecated` on old endpoints
+- 依赖项：无
+
+**2.12 优雅关闭 — P0**
+- 标准改动：`application.yml` 添加两行配置
+- 代码示例：`server.shutdown=graceful` + `spring.lifecycle.timeout-per-shutdown-phase=30s`
+- 依赖项：无
+
+**2.13 安全 DFX — P1**
+- 标准改动：对公开接口添加限流配置，校验 CORS 配置，确认 SecurityContext 在 @Async 中传递
+- 代码示例：`@RateLimiter(name = "public-api")` 或通过 Gateway 配置 `RequestRateLimiter` 过滤器
+- 依赖项：Resilience4j 或 Sentinel
+
+### 业务 DFX 维度改造指引
+
+**3.1 订单幂等 — P1**
+- 标准改动：接收 `X-Idempotency-Key` 请求头，Redis `SETNX` 原子检查，超时清理
+- 代码示例：`Boolean ok = redisTemplate.opsForValue().setIfAbsent("idempotent:" + key, "processing", Duration.ofHours(1))`
+- 依赖项：Redis
+
+**3.2 库存锁 — P1**
+- 标准改动：扣减前获取分布式锁，`finally` 块释放，`WHERE stock >= quantity` 防超卖
+- 代码示例：`lock = redisson.getLock("stock:" + skuId);` + `UPDATE sku SET stock = stock - ? WHERE id = ? AND stock >= ?`
+- 依赖项：Redisson 或 JDK Lock + DB
+
+**3.3 支付事务 — P1**
+- 标准改动：定义支付状态枚举（UNPAID/PAYING/PAID/REFUNDED/FAILED），添加回调验签，配置定时对账
+- 依赖项：支付网关 SDK
+
+**3.4 分布式事务 — P2**
+- 标准改动：引入 Outbox 模式（`@Transactional` + Outbox 表 + 定时投递）或 Seata AT
+- 代码示例：`@Transactional public void createOrder() { orderRepo.save(order); outboxRepo.save(event); }`
+- 依赖项：MQ 或 Seata
+
+**3.5 秒杀防护 — P2**
+- 标准改动：Redis 预加载库存、MQ 排队削峰、用户级限流、秒杀模块独立隔离
+- 依赖项：Redis、MQ
+
+**3.6 状态机监控 — P2**
+- 标准改动：引入状态机库（Squirrel StateMachine / stateless4j），添加卡单检测定时任务
+- 依赖项：状态机库依赖
+
+**3.7 第三方降级 — P1**
+- 标准改动：将外部服务抽成 `interface` + 实现，每个接口添加 `@CircuitBreaker`，提供 fallback 实现
+- 依赖项：Resilience4j
+
+**3.8 业务告警 — P2**
+- 标准改动：关键业务路径添加 `Counter`，配置告警阈值，关联 Prometheus Alertmanager
+- 依赖项：Micrometer、Prometheus
+
+**3.9 漏斗追踪 — P2**
+- 标准改动：在用户操作的关键转化点发布 `AnalyticsEvent`，定义 funnel 计数器
+- 依赖项：事件总线或 MQ
+
+**3.10 超时管理 — P1**
+- 标准改动：为每个外部调用配置独立的超时时间（RestTemplate/WebClient），`@Transactional(timeout = N)` 按操作配置
+- 代码示例：`@Transactional(timeout = 10)`、`factory.setReadTimeout(5000)`
+- 依赖项：无
+
+**3.11 数据对账 — P2**
+- 标准改动：编写 `@Scheduled` 定时任务，比对本地 DB 与远程（支付网关/物流）数据状态
+- 依赖项：Spring Scheduling
