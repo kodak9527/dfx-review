@@ -128,8 +128,8 @@
     "strategy", "template", "context", "wrapper", "proxy", "adapter",
     "cache", "lock", "mq", "redis", "kafka", "rabbitmq",
     "gateway", "server", "framework", "tool", "tools",
-    "serializer", "deserializer", "codec", "codec",
+    "serializer", "deserializer", "codec",
     "test", "tests", "mock", "stub",
-    "api", "client", "sdk"
+    "api", "client", "sdk", "rpc"
   ]
 }
