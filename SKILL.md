@@ -241,25 +241,31 @@ Glob 找出该服务 `src/main/java` 下所有 `.java` 文件。
       "springBootVersion": "3.2.0",
       "buildSystem": "Maven",
       "businessDomains": [
-        { "name": "订单处理", "detected": true, "fileCount": 28, "keyClasses": ["..."] }
+        { "name": "订单处理", "detected": true, "fileCount": 28, "keyClasses": ["OrderService.java", "OrderController.java"] }
       ],
       "genericDFX": [
         { "id": "2.1", "name": "日志诊断", "status": "present", "score": 1.0,
-          "summary": "...", "evidence": [{"file":"","snippet":""}], "recommendations": [] }
+          "summary": "SLF4J + MDC 上下文完整配置，LogstashEncoder 已启用", "evidence": [], "recommendations": [] }
       ],
-      "businessDFX": [ /* 同结构 */ ],
+      "businessDFX": [
+        { "id": "3.1", "name": "订单幂等", "status": "partial", "score": 0.5,
+          "summary": "接收 X-Idempotency-Key 但未使用 SETNX 原子操作", "evidence": [], "recommendations": [] }
+      ],
       "scores": { "overall": 0.72, "genericDFX": 0.68, "businessDFX": 0.76, "confidence": "high" },
       "remediation": [
         { "priority": "P0", "phase": "快速见效", "dimensionId": "2.12", "dimensionName": "优雅关闭",
-          "action": "...", "targetFiles": ["..."], "codePattern": "...", "effort": "2min", "impact": "..." }
+          "action": "在 application.yml 中添加 server.shutdown=graceful", "targetFiles": ["application.yml"], "codePattern": "server:\n  shutdown: graceful\n  lifecycle:\n    timeout-per-shutdown-phase: 30s", "effort": "2min", "impact": "部署时请求不丢失" }
       ]
-    }
+    },
+    { "name": "payment-service", "totalJavaFiles": 85, ... },
+    { "name": "inventory-service", "totalJavaFiles": 63, ... }
   ],
   "crossService": {
-    "ranking": ["order-service", "payment-service"],
+    "ranking": ["order-service", "payment-service", "inventory-service"],
     "comparisonMatrix": {
       "order-service": { "overall": 0.72, "genericDFX": { "2.1": 1.0, "2.2": 0.5, ... }, "businessDFX": { "3.1": 0.5, ... } },
-      "payment-service": { ... }
+      "payment-service": { ... },
+      "inventory-service": { ... }
     },
     "commonGaps": [
       { "dimensionId": "2.8", "dimensionName": "链路追踪", "affectedCount": 3, "totalServices": 3 }
