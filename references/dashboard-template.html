@@ -412,12 +412,15 @@ function renderOverview(){
 
   // Overall scores ranking
   h+='<div class="grid-2col">';
-  h+='<div class="panel"><h3>综合排名</h3><table class="ranking-table"><thead><tr><th>#</th><th>服务</th><th>综合</th><th>通用</th><th>业务</th></tr></thead><tbody>';
+  h+='<div class="panel"><h3>综合排名</h3><table class="ranking-table"><thead><tr><th>#</th><th>服务</th><th>综合</th><th>通用</th><th>业务</th><th>置信度</th></tr></thead><tbody>';
   var ranked=svcs.slice().sort(function(a,b){return (b.scores.overall||0)-(a.scores.overall||0)});
   ranked.forEach(function(s,idx){
     var o=s.scores.overall||0,op=pct(o);
     var bgColor=op>=80?'#22c55e':op>=60?'#eab308':op>=40?'#f97316':'#ef4444';
-    h+='<tr><td class="rank-num" style="color:'+bgColor+'">'+(idx+1)+'</td><td>'+esc(s.name)+'</td><td><span class="ranking-bar-bg"><span class="ranking-bar-fill" style="width:'+op+'%;background:'+bgColor+'"></span></span>'+op+'%</td><td>'+pct(s.scores.genericDFX)+'%</td><td>'+pct(s.scores.businessDFX)+'%</td></tr>';
+    var conf=s.scores.confidence||'high';
+    var confLabel=conf==='high'?'高':conf==='medium'?'中':'低';
+    var confColor=conf==='high'?'var(--green-text)':conf==='medium'?'var(--amber-text)':'var(--red-text)';
+    h+='<tr><td class="rank-num" style="color:'+bgColor+'">'+(idx+1)+'</td><td>'+esc(s.name)+'</td><td><span class="ranking-bar-bg"><span class="ranking-bar-fill" style="width:'+op+'%;background:'+bgColor+'"></span></span>'+op+'%</td><td>'+pct(s.scores.genericDFX)+'%</td><td>'+pct(s.scores.businessDFX)+'%</td><td style="color:'+confColor+';font-weight:700">'+confLabel+'</td></tr>';
   });
   h+='</tbody></table></div>';
 
