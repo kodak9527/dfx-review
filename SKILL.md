@@ -1,8 +1,19 @@
 ---
 name: dfx-review
-description: 扫描 Java/Spring 电商微服务后端代码仓库，全量读取代码文件，识别 DFX（Design for eXcellence）
-  设计模式。自动发现所有微服务，逐个扫描业务逻辑和 DFX 能力，生成多服务对比 Dashboard HTML 报告。
-  当用户提到"DFX审视""运维审视""DFX扫描""运维检查""生产就绪评估"时使用此 skill。
+version: "2.1.0"
+description: 扫描 Java/Spring 电商微服务后端代码仓库，全量读取代码文件，识别 DFX（Design for eXcellence）设计模式。自动发现所有微服务，逐个扫描业务逻辑和 DFX 能力，生成多服务对比 Dashboard HTML 报告。当用户提到"DFX审视""运维审视""DFX扫描""运维检查""生产就绪评估"时使用此 skill。
+tags:
+  - java
+  - spring
+  - microservices
+  - dfx
+  - operational-review
+  - backend
+author: DFX Team
+dependencies:
+  - references/analysis-framework.md
+  - references/domains.json
+  - references/dashboard-template.html
 ---
 
 # DFX 运维审视 Skill v2
@@ -200,6 +211,10 @@ Glob 找出该服务 `src/main/java` 下所有 `.java` 文件。
 | 非 Spring 项目 | 标注"非 Spring 项目"，DFX 评分仅基于 Java 通用实践 |
 | 无 Java 文件 | 中止："未找到 Java 源文件。" |
 | 模板文件找不到 | 在 SKILL.md 所在目录下搜索 references/ 路径 |
+| Gradle 项目无构建文件 | 尝试 `gradlew` 或 `build.gradle.kts`，检测 Kotlin DSL |
+| 多仓库微服务 | 支持 glob 模式如 `../*/pom.xml` 扫描同级目录 |
+| 服务名冲突 | 使用 `groupId:artifactId` 作为唯一标识 |
+| 文件编码问题 | UTF-8 优先，失败则尝试 GBK，仍失败则跳过并记录 |
 
 ## 参考资料
 
