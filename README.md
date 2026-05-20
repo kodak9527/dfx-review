@@ -97,7 +97,7 @@ git clone https://github.com/kodak9527/dfx-review.git
 | 缺失 | 0.0 | 代码中未发现相关实现 |
 
 ```
-综合得分 = 通用DFX × 0.40 + 业务DFX × 0.40 + 领域覆盖度 × 0.20
+综合得分 = 通用DFX × 0.50 + 业务DFX × 0.50
 ```
 
 ---
