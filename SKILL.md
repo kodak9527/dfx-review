@@ -1,6 +1,6 @@
 ---
 name: dfx-review
-version: "2.5.0"
+version: "2.6.0"
 description: 扫描 Java/Spring 电商微服务后端代码仓库，全量读取代码文件，识别 DFX（Design for eXcellence）设计模式。自动发现所有微服务，逐个扫描业务逻辑和 DFX 能力，生成多服务对比 Dashboard HTML 报告。当用户提到"DFX审视""运维审视""DFX扫描""运维检查""生产就绪评估"时使用此 skill。
 tags:
   - java
@@ -48,8 +48,9 @@ dependencies:
 
 **预检输出**：
 ```
-[预检] 检测到 Maven 单模块项目：order-service
-[预检] Spring Boot 版本：3.2.0（从 pom.xml 推断）
+[预检] 检测到 Maven 多模块项目（含 3 个子模块）
+[预检] 模块：order-service、payment-service、inventory-service
+[预检] Spring Boot 版本：3.2.0
 [预检] 源文件目录：src/main/java ✓
 [预检] 扫描就绪，开始阶段一...
 ```
