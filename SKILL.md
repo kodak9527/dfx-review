@@ -16,7 +16,7 @@ dependencies:
   - references/dashboard-template.html
 ---
 
-# DFX 运维审视 Skill v2
+# DFX 运维审视 Skill
 
 扫描 Java/Spring 微服务群，全量读取代码，从文件内容（而非关键词匹配）推断 DFX 设计模式。
 支持多服务并行扫描、跨服务对比、单服务详情。生成 Dashboard HTML 报告。
