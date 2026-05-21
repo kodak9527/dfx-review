@@ -1,58 +1,55 @@
 ---
 name: dfx-review
-version: "2.9.0"
-description: 扫描 Java/Spring 电商微服务后端，识别 DFX（Design for eXcellence）设计模式。自动生成跨服务对比 Dashboard。当用户提到"DFX审视""运维扫描""生产就绪评估"时使用。
+version: "3.0.0"
+description: 扫描 Java/Spring 微服务后端，识别 DFX 设计模式并生成 Dashboard。针对内部大模型优化，采用确定性 Python 脚本计算得分。
 tags: [java, spring, microservices, dfx, operational-review]
 dependencies:
   - references/analysis-framework.md
   - references/scanning_strategy.md
-  - references/report_schema.md
   - references/domains.json
   - references/dashboard-template.html
+  - scripts/dfx_parser.py
 ---
 
 # DFX 运维审视 Skill
 
-从代码文件内容推断 DFX 设计模式（日志、异常、熔断、幂等、事务等），生成可视化多服务 Dashboard。
+从代码内容推断 DFX 模式。采用“LLM 提取证据 + Python 脚本打分”的健壮架构，适配各种推理能力的模型。
 
 ## 触发词
-- "DFX 审视"、"运维设计检查"、"生产就绪度评估"、"扫描 DFX"
+- "DFX 审视"、"运维设计检查"、"扫描 DFX"
 
-## 核心工作流 (6 阶段)
+## 核心工作流 (3 阶段)
 
-### Phase 0: 环境预检
-验证 Maven/Gradle 项目结构及 `src/main/java`。详见 `references/scanning_strategy.md`。
+### Phase 1: 扫描与证据提取 (LLM 执行)
+1. **环境预检**：验证项目结构（见 `references/scanning_strategy.md`）。
+2. **证据抽取**：
+   - 按照优先级分组读取代码文件。
+   - **严格查阅 `references/analysis-framework.md`** 中的 26 个维度判定准则。
+   - 为每个服务生成一个 Markdown 报告，必须包含“证据提取”和“状态判定”。
+   - 将报告保存为 `output/dfx_raw_<service_name>.md`。
 
-### Phase 1: 服务发现
-识别多模块或单模块项目中的微服务边界，收集元数据（SpringBoot 版本、文件数等）。
+### Phase 2: 结构化解析与打分 (确定性脚本)
+运行 Python 脚本处理 LLM 生成的原始报告。脚本会自动提取判定结论，并根据预设权重计算得分。
+```bash
+# 确保已安装 python
+python scripts/dfx_parser.py --dir output/ --template references/dashboard-template.html --output dfx-report.html
+```
 
-### Phase 2: 逐服务全量扫描 (关键)
-1. **清单分组**：按 P0/P1/P2 优先级分批读取文件。参考 `references/scanning_strategy.md`。
-2. **模式识别**：**必须阅读 `references/analysis-framework.md`** 获取 26 项 DFX 判定标准。
-3. **信号记录**：从代码实际内容（注解、API 调用、配置）中提取信号，严禁关键词盲匹。
-
-### Phase 3: 跨服务汇总
-统计各服务排名、共性短板、成熟度分级（优秀/良好/一般/薄弱）。
-
-### Phase 4: 评分计算
-计算通用 DFX (13 维度) 与业务 DFX (11 维度) 得分。根据已读文件覆盖率应用**置信度折扣**。
-
-### Phase 5: 生成报告
-组装 JSON 数据模型（参考 `references/report_schema.md`），填充 `references/dashboard-template.html` 并输出为 `dfx-report.html`。
+### Phase 3: 结果交付
+告知用户 DFX 审视已完成，并提供 `dfx-report.html` 的位置。
 
 ## 资源导航
 
-- **DFX 判定标准大全**：`references/analysis-framework.md` (包含 26 个维度的代码信号清单)。
-- **扫描策略与置信度**：`references/scanning_strategy.md` (优先级分组、检查点、边界处理)。
-- **报告 JSON 结构**：`references/report_schema.md` (用于 HTML 组装的数据协议)。
-- **业务领域词汇表**：`references/domains.json`。
+- **阅卷指南**：`references/analysis-framework.md` (包含正/反例及思维链要求)。
+- **扫描策略**：`references/scanning_strategy.md` (文件优先级与采样规则)。
+- **解析引擎**：`scripts/dfx_parser.py` (核心算分逻辑)。
 
-## 执行约束
+## 执行约束 (必须遵守)
 
-1. **内容驱动**：从文件实际内容推断模式，不依赖文件名。
-2. **分批执行**：每批控制在 5-8 个文件，防止上下文溢出。
-3. **置信度标注**：若读取文件不足 30%，必须在报告中标注“采样不足”。
-4. **业务侧重**：重点审视 3.1-3.5 核心业务 DFX（幂等、锁、事务等）。
+1. **思维链强制**：大模型输出分析时，必须包含“意图匹配”和“证据提取”过程。
+2. **严禁生成 JSON**：不要让大模型生成任何 JSON 数据，全部使用 Markdown 文本。
+3. **严禁脑内算分**：大模型只需给出 `Present/Partial/Missing` 的定性结论，不涉及任何数值计算。
+4. **采样置信度**：若代码量巨大导致采样不足，应在分析中诚实记录。
 
 ---
-**提示**：在开始分析前，请务必预览 `references/analysis-framework.md` 以确保判定逻辑与项目标准一致。
+**提示**：本 Skill 专为推理能力受限的环境优化，通过脚本托底保证 HTML 报告 100% 可用。
