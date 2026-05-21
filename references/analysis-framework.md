@@ -1,513 +1,217 @@
-# DFX 分析框架
+# DFX 分析框架 (阅卷指南版)
 
-## 一、业务逻辑提取
+本文件是为大模型提供的 DFX 审查判定标准。请像一位经验丰富的“阅卷老师”一样，根据代码中的事实（证据）进行判定。
 
-从代码实际的包结构出发，自动发现业务领域——而非从预定义清单对答案。
+### 强制输出格式 (Must Follow)
+你在分析每个服务时，必须为 24 个维度中的每一个严格按照以下格式输出。**严禁输出任何 JSON 格式，严禁自行计算分数。**
 
-**工作方式**：
+```markdown
+- **维度**：[维度ID 名称]
+- **意图匹配**：[简述代码逻辑是否符合该维度的审查意图]
+- **证据提取**：[摘录具体的类名、行号或代码片段。若未发现，写“未发现相关证据”]
+- **状态判定**：[Present / Partial / Missing]
+```
 
-1. 扫描 `src/main/java` 下所有包目录
-2. 过滤掉 `domains.json` 中 `excludePaths` 列出的技术/通用包（如 common、util、config、model 等）
-3. 从剩余的业务包中提取关键词（如 `order`、`payment`、`user`）
-4. 用 `domains.json` 中的 `vocabulary` 将英文关键词映射为中文业务领域标签
-5. 未在 vocabulary 中的关键词保留英文原名，并在报告中展示
-6. 同一中文标签下的多个关键词自动合并（如 `inventory` + `stock` → 都归入"库存管理"）
-
-> **扩展方式**：编辑 `references/domains.json`：
-> - 在 `vocabulary` 中添加 `"英文关键词": "中文标签"` 来增加业务领域映射
-> - 在 `excludePaths` 中调整需要过滤的包名列表
-> - 无需修改本文件或 SKILL.md
-
-**输出**：`{领域名 → 文件数, 关键类名[]}`。所有从代码中发现的领域均标记为"已检测到"。
+🚨 **【防幻觉极度警告】**：
+证据提取必须使用代码文件中的**原词原句**！你只能基于你实际读到的 Java 代码说话。如果代码中确实没有使用对应的机制，你的“证据提取”必须写『未发现代码依据』，并且“状态判定”必须是 **Missing**！严禁编造类名、注解名或为了迎合维度而强行给出 Present。
 
 ---
 
 ## 二、通用 DFX 能力（13 维度）
 
-> **扫描方式**：不再依赖关键词 grep。读取每个 Java 文件时，逐文件检查以下代码信号。信号在 3+ 个关键文件（Service/Controller/Config）中出现视为"已具备"，1-2 个视为"部分具备"，完全未出现视为"缺失"。
-
 ### 2.1 日志与诊断
-
-| 代码信号 | 说明 |
-|---------|---------|
-| 文件顶部有 `@Slf4j` 或手动声明的 Logger | SLF4J 日志框架使用 |
-| 方法体内有 `MDC.put("traceId", ...)` 调用 | 上下文日志（traceId/orderId）|
-| `logback-spring.xml` 中配置了 JSON encoder | 结构化/JSON 日志输出 |
-| 实体/DTO 字段上有 `@ToString.Exclude` 或用 `@JsonIgnore` 标注了敏感字段 | 日志/序列化时敏感数据脱敏 |
-
-- **已具备**：>50% 的 Service 使用 SLF4J/Lombok，MDC 已配置，JSON 编码器，敏感字段已排除
-- **部分具备**：使用了 SLF4J 但无 MDC，或无 JSON 日志，或使用不一致
-- **缺失**：未找到 SLF4J 导入；使用 System.out
+**【审查意图】**：系统是否记录了足够的运行时信息，且是否包含链路追踪上下文。
+**【代码锚点（正例）】**：`@Slf4j`、`MDC.put("traceId", ...)`、JSON 日志配置、`log.info/error`。
+**【反面模式（反例）】**：仅使用 `System.out.println`。
+**【状态判定】**：
+- **Present**: 有日志框架且包含 MDC 链路上下文。
+- **Partial**: 有日志框架但无 MDC 追踪。
+- **Missing**: 无任何日志记录。
 
 ### 2.2 异常处理
-
-| 代码信号 | 说明 |
-|---------|---------|
-| 存在带 `@RestControllerAdvice` 注解的类 | 全局异常处理器 |
-| Controller/Advice 中有 `@ExceptionHandler` 方法 | 异常到响应的映射 |
-| 定义了分级业务异常类（继承自 RuntimeException） | 业务异常体系 |
-| 定义了统一的 ErrorResponse/ApiError 响应 DTO | 统一错误响应结构 |
-
-- **已具备**：全局 `@RestControllerAdvice`，分级异常体系，统一错误响应 DTO
-- **部分具备**：有处理器但异常结构扁平或错误格式不一致
-- **缺失**：无全局异常处理器；直接暴露堆栈信息
+**【审查意图】**：是否具备全局异常拦截机制，避免向前端直接暴露堆栈信息。
+**【代码锚点（正例）】**：`@RestControllerAdvice`、`@ExceptionHandler`、统一的 `ErrorResponse` DTO。
+**【状态判定】**：
+- **Present**: 有全局处理器且定义了标准的错误返回结构。
+- **Partial**: 有处理器但异常捕获不全或返回格式不一致。
+- **Missing**: 无全局异常处理。
 
 ### 2.3 指标监控
-
-| 代码信号 | 说明 |
-|---------|---------|
-| 文件 `import io.micrometer` 或方法的 `@Timed` 注解 | Micrometer 指标框架使用 |
-| 代码中创建了 `Counter`/`Gauge`/`Timer` 类型的变量 | 自定义业务指标 |
-| 有实现 `MeterBinder` 接口的 Bean | 系统级指标注册 |
-
-- **已具备**：核心 Service 有 `@Timed`，自定义计数器，MeterBinder Bean
-- **部分具备**：有 Micrometer 但仅自动配置的 JVM 指标
-- **缺失**：无 Micrometer 导入；无指标埋点
+**【审查意图】**：是否暴露了业务或系统指标（如 QPS、耗时、成功率）。
+**【代码锚点（正例）】**：`@Timed`、`Counter.builder`、`io.micrometer`。
+**【状态判定】**：
+- **Present**: 有显式的业务指标埋点（Counter/Timer）。
+- **Partial**: 仅有框架自带的 JVM 指标。
+- **Missing**: 无任何指标埋点。
 
 ### 2.4 健康检查
-
-| 代码信号 | 说明 |
-|---------|---------|
-| `HealthIndicator` 或 `AbstractHealthIndicator` | 自定义健康指示器 |
-| `livenessState` 或 `readinessState` | K8s 探针支持 |
-| yml/properties 中的 `management\.endpoint\.health` | 健康端点配置 |
-
-- **已具备**：为 DB/Redis/MQ 提供了自定义 HealthIndicator，配置了存活/就绪探针
-- **部分具备**：仅有自动配置的健康检查；无探针区分
-- **缺失**：无 Actuator 或未暴露健康端点
+**【审查意图】**：系统是否提供健康检查端点供 K8s 或网关探测。
+**【代码锚点（正例）】**：`HealthIndicator` 实现、`livenessState` 配置、`actuator` 依赖。
+**【状态判定】**：
+- **Present**: 暴露了健康端点且包含自定义依赖（DB/Redis）检查。
+- **Partial**: 仅有默认的健康端点。
+- **Missing**: 无健康检查。
 
 ### 2.5 熔断与韧性
-
-| 代码信号 | 说明 |
-|---------|---------|
-| `@CircuitBreaker\(` | Resilience4j 熔断 |
-| `@Bulkhead\(` | 舱壁隔离 |
-| `@RateLimiter\(` | 限流 |
-| `@TimeLimiter\(` | 超时控制 |
-| `fallbackMethod` | 降级方法 |
-| `import io\.github\.resilience4j` | Resilience4j 依赖 |
-| `import com\.alibaba\.csp\.sentinel` | Sentinel（替代方案）|
-
-- **已具备**：所有远程调用有 `@CircuitBreaker`，池化服务有 `@Bulkhead`，定义了 `fallbackMethod`
-- **部分具备**：仅使用了 `@Retry`，或熔断无降级，或只使用默认配置
-- **缺失**：无韧性注解或依赖
+**【审查意图】**：调用外部服务失败时，是否有防止雪崩的保护机制。
+**【代码锚点（正例）】**：`@CircuitBreaker`、`fallbackMethod` 属性。
+**【状态判定】**：
+- **Present**: 发现熔断注解且包含降级逻辑 (fallback)。
+- **Partial**: 发现注解但缺降级逻辑。
+- **Missing**: 没有任何保护。
 
 ### 2.6 缓存
+**【审查意图】**：是否合理使用缓存减少数据库压力。
+**【代码锚点（正例）】**：`@Cacheable`、`RedisTemplate`、设置了 TTL。
+**【状态判定】**：
+- **Present**: 关键查询有缓存且配置了自动淘汰（TTL）。
+- **Partial**: 有缓存但无淘汰机制。
+- **Missing**: 无缓存使用。
 
-| 代码信号 | 说明 |
-|---------|---------|
-| `@Cacheable\(` | 读穿透缓存 |
-| `@CacheEvict\(` | 缓存淘汰 |
-| `@CachePut\(` | 写穿透缓存 |
-| `@EnableCaching` | 缓存开关 |
-| `CacheManager` 或 `RedisCacheManager` | 缓存提供者配置 |
-| yml/properties 中的 `spring\.cache\.type` 或 `spring\.cache\.redis\.time-to-live` | 缓存 TTL 配置 |
-
-- **已具备**：CRUD 上有 `@Cacheable` + `@CacheEvict`，分区 TTL，热点缓存有 `sync=true`
-- **部分具备**：有 `@Cacheable` 但无淘汰，或所有缓存共用 TTL
-- **缺失**：无缓存注解或配置
-
-### 2.7 重试（框架级）
-
-| 代码信号 | 说明 |
-|---------|---------|
-| `@Retryable\(` | Spring Retry 注解 |
-| `@Recover` | 重试耗尽后的恢复方法 |
-| `import org\.springframework\.retry` | Spring Retry 依赖 |
-| `RetryTemplate` | 编程式重试配置 |
-
-- **已具备**：幂等操作上有 `@Retryable`，定义了 `@Recover`，指数退避已配置
-- **部分具备**：有 `@Retryable` 但无 `@Recover`，或对非幂等操作重试
-- **缺失**：无重试机制
+### 2.7 重试
+**【审查意图】**：对于瞬时故障，是否具备自动重试机制。
+**【代码锚点（正例）】**：`@Retryable`、`@Recover`、`RetryTemplate`。
+**【状态判定】**：
+- **Present**: 对幂等操作配置了带退避策略的重试。
+- **Partial**: 有重试但无退避策略（固定间隔）。
+- **Missing**: 无重试逻辑。
 
 ### 2.8 链路追踪
+**【审查意图】**：是否能追踪跨服务的请求链路。
+**【代码锚点（正例）】**：`@WithSpan`、`import io.opentelemetry`、`Sleuth`。
+**【状态判定】**：
+- **Present**: 包含自定义埋点（Span）和业务标签。
+- **Partial**: 仅有自动配置的追踪。
+- **Missing**: 无追踪。
 
-| 代码信号 | 说明 |
-|---------|---------|
-| `import io\.opentelemetry` | OpenTelemetry SDK |
-| `@WithSpan\(` 或 `@SpanTag\(` 或 `@NewSpan\(` | 自定义 Span 注解 |
-| `brave\.Tracer` 或 `spring-cloud-starter-sleuth` | Sleuth（旧版）|
-| `tracer\.nextSpan\(\)` 或 `tracer\.currentSpan\(\)` | 编程式 Span 创建 |
-
-- **已具备**：OTel/Sleuth 已配置，关键方法有 `@WithSpan`，自定义 Span 含业务标签
-- **部分具备**：仅自动埋点；无自定义 Span 或业务标签
-- **缺失**：无追踪埋点
-
-### 2.9 线程池与异步
-
-| 代码信号 | 说明 |
-|---------|---------|
-| `@Async\(` | 异步方法 |
-| `@EnableAsync` | 异步开关 |
-| `ThreadPoolTaskExecutor` | 自定义线程池配置 |
-| `RejectedExecutionHandler` | 拒绝策略 |
-| `setCorePoolSize\(` 或 `setMaxPoolSize\(` | 线程池大小配置 |
-
-- **已具备**：自定义 `ThreadPoolTaskExecutor`，有界队列，明确的拒绝策略，指标集成
-- **部分具备**：`@Async` 使用默认 `SimpleAsyncTaskExecutor`
-- **缺失**：无异步支持或线程池配置
+### 2.9 异步执行
+**【审查意图】**：耗时任务是否使用了独立的线程池异步处理。
+**【代码锚点（正例）】**：`@Async`、自定义 `ThreadPoolTaskExecutor`。
+**【状态判定】**：
+- **Present**: 配置了有界队列线程池并处理了拒绝策略。
+- **Partial**: 使用了 `@Async` 但未配置自定义线程池。
+- **Missing**: 无异步执行。
 
 ### 2.10 配置管理
-
-| 代码信号 | 说明 |
-|---------|---------|
-| `@ConfigurationProperties\(` | 类型化配置 |
-| `@RefreshScope` | 动态配置刷新 |
-| 配置类上的 `@Validated` | 配置校验 |
-| `@ConditionalOnProperty\(` | 特性开关 |
-| `application-{profile}\.yml` | 环境特定配置 |
-
-- **已具备**：`@ConfigurationProperties` 带校验，`@RefreshScope` 用于动态配置，特性开关
-- **部分具备**：大量使用 `@Value`，无校验，所有环境共用配置
-- **缺失**：硬编码常量，无外部化配置
+**【审查意图】**：配置是否外置，是否支持动态刷新。
+**【代码锚点（正例）】**：`@ConfigurationProperties`、`@RefreshScope`。
+**【状态判定】**：
+- **Present**: 配置类化且支持热刷新或外置。
+- **Partial**: 混合使用硬编码和外部配置。
+- **Missing**: 大量硬编码。
 
 ### 2.11 API 版本化
-
-| 代码信号 | 说明 |
-|---------|---------|
-| `@RequestMapping` 中的 `/v[0-9]+/` | URL 路径版本化 |
-| `X-API-Version` 或 `Accept-Version` 请求头 | 请求头版本化 |
-| Controller 方法上的 `@Deprecated` | 废弃标记 |
-| `@JsonIgnoreProperties\(ignoreUnknown = true\)` | 向下兼容 |
-
-- **已具备**：多个 API 版本共存，废弃标记，向下兼容的 DTO
-- **部分具备**：单版本，部分废弃标记
-- **缺失**：无版本化策略
+**【审查意图】**：API 是否有版本控制（如 /v1/）。
+**【代码锚点（正例）】**：URL 含 `/v[0-9]/`、`@Deprecated`。
+**【状态判定】**：
+- **Present**: 路径或 Header 有版本标识。
+- **Partial**: 仅部分接口有版本标识。
+- **Missing**: 无版本控制。
 
 ### 2.12 优雅关闭
-
-| 代码信号 | 说明 |
-|---------|---------|
-| `server\.shutdown\s*[=:]\s*graceful` | 优雅关闭开关 |
-| `spring\.lifecycle\.timeout-per-shutdown-phase` | 关闭超时 |
-| `@PreDestroy` | 清理钩子 |
-
-- **已具备**：优雅关闭启用且超时合理，`@PreDestroy` 清理，就绪探针联动
-- **部分具备**：优雅关闭启用但超时过短或无清理钩子
-- **缺失**：默认立即关闭
+**【审查意图】**：应用重启时是否保证正在处理的请求不丢失。
+**【代码锚点（正例）】**：`server.shutdown=graceful`。
+**【状态判定】**：
+- **Present**: 配置了优雅关闭及合理的超时。
+- **Missing**: 默认立即关闭。
 
 ### 2.13 安全 DFX
-
-| 代码信号 | 说明 |
-|---------|---------|
-| `RateLimiter` 或 `RateLimit` 过滤器 | API 限流 |
-| `@Async` 中的 `SecurityContextHolder` 传递 | 异步上下文传递 |
-| `CorsConfigurationSource` 或 `@CrossOrigin` | CORS 配置 |
-| `MODE_INHERITABLETHREADLOCAL` | 安全上下文传播 |
-
-- **已具备**：公开端点有限流，认证上下文已配置传递，CORS 指定具体域名
-- **部分具备**：部分端点有限流，生产环境使用通配符 CORS
-- **缺失**：无限流，未考虑认证上下文传递
+**【审查意图】**：是否有针对 API 的限流和 CORS 保护。
+**【代码锚点（正例）】**：`RateLimiter`、`CorsConfigurationSource`。
+**【状态判定】**：
+- **Present**: 关键接口有限流且配置了域名白名单。
+- **Partial**: 无限流或使用了通配符 CORS。
+- **Missing**: 无防护。
 
 ---
 
 ## 三、业务 DFX 能力（11 维度）
 
 ### 3.1 订单幂等性
-
-| 代码信号 | 说明 |
-|---------|---------|
-| 类/方法/参数名中的 `[Ii]dempoten` | 幂等概念 |
-| `X-Idempotency-Key` 或 `requestId` | 客户端幂等键 |
-| Redis `SETNX` 或 DB 唯一约束 | 原子检查-存储 |
-| `@Scheduled` 清理幂等键 | 键过期管理 |
-
-- **已具备**：接收幂等键，原子检查-存储，TTL 清理
-- **部分具备**：接收键但非原子检查后设置
-- **缺失**：无幂等机制；可能产生重复订单
+**【审查意图】**：防止因网络重试或连击导致的重复数据。
+**【代码锚点（正例）】**：`X-Idempotency-Key`、Redis `SETNX`、DB `UNIQUE KEY`。
+**【反面模式（反例）】**：先 `SELECT` 后 `INSERT`。
+**【状态判定】**：
+- **Present**: 接收防重键且使用原子操作（Redis/DB 唯一索引）。
+- **Partial**: 仅接收键但使用非原子操作。
+- **Missing**: 无防重逻辑。
 
 ### 3.2 库存锁定与释放
-
-| 代码信号 | 说明 |
-|---------|---------|
-| `SELECT.*FOR UPDATE` 或 `@Lock\(` | 悲观锁 |
-| `Redisson` 或 `RedisLock` 或 `distributed.*lock` | 分布式锁 |
-| `releaseStock` 或 `releaseInventory` 或 `unlockStock` | 库存释放 |
-| `WHERE.*stock\s*>=` 或 `CHECK.*available` | SQL 层防超卖 |
-
-- **已具备**：扣减前加锁，失败时释放，超时释放，防超卖
-- **部分具备**：有锁但失败不释放或无超时
-- **缺失**：无库存锁；可能超卖
+**【审查意图】**：防止超卖，确保库存扣减的原子性。
+**【代码锚点（正例）】**：`SELECT ... FOR UPDATE`、`distributed-lock`、`redisson`。
+**【状态判定】**：
+- **Present**: 扣减前有分布式锁且有补偿释放逻辑。
+- **Partial**: 有锁但无超时释放或无兜底释放。
+- **Missing**: 无锁定机制。
 
 ### 3.3 支付事务模式
-
-| 代码信号 | 说明 |
-|---------|---------|
-| 支付状态枚举含状态转换 | 支付状态机 |
-| `outTradeNo` 或 `transactionId` 去重 | 支付幂等 |
-| `verifySign` 或 `checkSign` 或 `validateNotify` | 回调签名验证 |
-| 支付对账 `@Scheduled` 任务 | 定时对账 |
-
-- **已具备**：状态机，幂等支付，回调验证，对账
-- **部分具备**：幂等支付但无验证或无对账
-- **缺失**：无支付状态追踪或去重
+**【审查意图】**：支付状态的正确流转及对账。
+**【代码锚点（正例）】**：支付状态枚举（PAID/UNPAID）、`verifySign` 验签。
+**【状态判定】**：
+- **Present**: 有正式状态机和第三方回调验签。
+- **Partial**: 有状态字段但无回调校验。
+- **Missing**: 无支付状态管理。
 
 ### 3.4 分布式事务
-
-| 代码信号 | 说明 |
-|---------|---------|
-| `@GlobalTransactional` 或 `io\.seata` | Seata 分布式事务 |
-| `@Saga` 或 Saga 编排器类 | Saga 模式 |
-| `@Compensable` 或 `@Compensate` | 补偿处理器 |
-| `Outbox` 或 `TransactionalOutbox` | Outbox 模式 |
-| `@TransactionalEventListener` | 事务阶段事件监听 |
-
-- **已具备**：Saga/TCC/Outbox 模式，带正确的补偿逻辑
-- **部分具备**：有 `@TransactionalEventListener` 但无补偿或 Outbox
-- **缺失**：无分布式事务处理；跨服务一致性无法保证
+**【审查意图】**：跨服务调用时的一致性保证（如 Saga, TCC）。
+**【代码锚点（正例）】**：`@GlobalTransactional` (Seata)、`Outbox` 表、`Saga`。
+**【状态判定】**：
+- **Present**: 有明确的补偿逻辑或分布式事务框架。
+- **Partial**: 有事务监听但无异常补偿逻辑。
+- **Missing**: 仅有普通 `@Transactional`。
 
 ### 3.5 秒杀/高并发防护
-
-| 代码信号 | 说明 |
-|---------|---------|
-| Redis 库存预加载模式 | 秒杀库存预热 |
-| 订单请求的 MQ 队列 | 请求排队/背压 |
-| 秒杀路径的用户级限流 | 用户级限流 |
-| 秒杀模块的特性开关或熔断 | 秒杀隔离/降级 |
-
-- **已具备**：Redis 预加载，MQ 排队，用户级限流，独立模块降级
-- **部分具备**：部分但非全部保护（如仅预热无 MQ）
-- **缺失**：无秒杀专项防护
+**【审查意图】**：极高流量下系统的生存能力。
+**【代码锚点（正例）】**：Redis 库存预热、MQ 异步削峰。
+**【状态判定】**：
+- **Present**: 包含预热、削峰和限流三重保护。
+- **Partial**: 仅有部分保护（如仅有 MQ）。
+- **Missing**: 无专项防护。
 
 ### 3.6 状态机监控
-
-| 代码信号 | 说明 |
-|---------|---------|
-| `StateMachine` 或 `squirrel-foundation` 或 `stateless4j` | 状态机库 |
-| 状态枚举含正式转换校验 | 结构化状态转换 |
-| `@Scheduled` 卡单检测任务 | 滞留状态告警 |
-| 每个状态转换的 `Counter` | 状态转换指标 |
-
-- **已具备**：正式状态机，卡单检测，转换指标
-- **部分具备**：枚举状态但临时转换（if/else）
-- **缺失**：无正式状态管理；原始状态字段
+**【审查意图】**：业务流程是否卡在某个状态（如“已下单未支付”）。
+**【代码锚点（正例）】**：`@Scheduled` 定时检查滞留状态的任务、状态转换 Log。
+**【状态判定】**：
+- **Present**: 有定时任务监控长延时状态。
+- **Partial**: 有状态转换记录但无自动监控。
+- **Missing**: 无状态追踪。
 
 ### 3.7 第三方服务降级
-
-| 代码信号 | 说明 |
-|---------|---------|
-| 外部服务的 `interface.*Client` 或 `interface.*Gateway` | 外部服务抽象 |
-| 每个外部服务调用上的 `@CircuitBreaker` | 每服务独立熔断 |
-| 返回缓存/降级响应的降级实现 | 优雅降级 |
-| 外部服务接口的多实现 | 供应商故障转移 |
-
-- **已具备**：接口抽象，每服务独立熔断，降级实现，多供应商
-- **部分具备**：有接口但无降级或熔断
-- **缺失**：直接调用外部服务，无抽象和保护
+**【审查意图】**：外部系统挂掉时，本地业务是否能继续（如：用缓存响应）。
+**【代码锚点（正例）】**：独立接口实现多供应商、`fallback` 返回缓存数据。
+**【状态判定】**：
+- **Present**: 为第三方接口提供了专门的降级实现类。
+- **Partial**: 仅有异常捕获。
+- **Missing**: 依赖外部系统。
 
 ### 3.8 业务告警指标
-
-| 代码信号 | 说明 |
-|---------|---------|
-| 含业务事件名的 `Counter\.builder\(` | 业务 KPI 计数器 |
-| 指标名或配置中的 `alert` 前缀 | 告警阈值配置 |
-| 指标中的 SLA/SLI 计算 | SLO 追踪 |
-| 告警阈值的 `@ConfigurationProperties` | 可配置告警阈值 |
-
-- **已具备**：定义了业务 KPI，告警阈值已配置，追踪 SLI
-- **部分具备**：有些业务指标但无告警或阈值
-- **缺失**：无业务级指标；仅系统指标
+**【审查意图】**：是否有针对业务 KPI（如转化率跌零）的告警。
+**【代码锚点（正例）】**：针对 `OrderFail` 的专门计数器、告警阈值配置。
+**【状态判定】**：
+- **Present**: 定义了关键业务失败的指标。
+- **Partial**: 仅有通用异常计数。
+- **Missing**: 无业务告警。
 
 ### 3.9 用户旅程/漏斗追踪
-
-| 代码信号 | 说明 |
-|---------|---------|
-| `AnalyticsEvent` 或 `FunnelEvent` 或 `UserActionEvent` | 结构化分析事件 |
-| 在转化节点（浏览、加购、结算、支付）发布事件 | 漏斗各步骤事件 |
-| 漏斗转化 `Counter` 指标 | 漏斗转化率 |
-
-- **已具备**：所有漏斗节点有结构化事件，转化指标
-- **部分具备**：部分漏斗节点有事件；缺转化指标
-- **缺失**：无用户旅程追踪
+**【审查意图】**：是否记录了用户操作全流程以便分析流失。
+**【代码锚点（正例）】**：`AnalyticsEvent`、记录“浏览-加购-下单”全链路。
+**【状态判定】**：
+- **Present**: 核心转化节点均有事件埋点。
+- **Partial**: 仅部分节点有记录。
+- **Missing**: 无记录。
 
 ### 3.10 超时管理
-
-| 代码信号 | 说明 |
-|---------|---------|
-| `@Transactional\(timeout` 按操作区分 | 按操作 DB 超时 |
-| `RestTemplate` 或 `WebClient` 超时配置 | HTTP 客户端超时 |
-| 带名称的 `@TimeLimiter\(` | Resilience4j 时间限制器 |
-| `spring\.lifecycle\.timeout-per-shutdown-phase` | 关闭超时 |
-
-- **已具备**：按操作类型区分超时，超时后升级处理
-- **部分具备**：所有操作共用全局超时
-- **缺失**：无超时配置；默认无限等待
+**【审查意图】**：是否显式控制了每一个外部调用的超时时间。
+**【代码锚点（正例）】**：`setConnectTimeout`、`@Transactional(timeout=...)`。
+**【状态判定】**：
+- **Present**: 为所有 HTTP/RPC 调用配置了独立超时。
+- **Partial**: 仅有全局默认超时。
+- **Missing**: 未配置。
 
 ### 3.11 数据一致性对账
-
-| 代码信号 | 说明 |
-|---------|---------|
-| `@Scheduled` 对账/比对任务 | 定时对账 |
-| 类名中的 `reconcil` 或 `settlement` 或 `consistency.*check` | 对账逻辑 |
-| 跨系统比对逻辑（本地 vs 网关）| 一致性检查 |
-| `@Scheduled` 失败重试任务 | 补偿重试 |
-
-- **已具备**：定期对账，失败重试，不匹配告警
-- **部分具备**：有对账但手动触发或覆盖不全
-- **缺失**：无跨系统一致性检查
-
----
-
-## 分类评定标准
-
-所有维度统一适用以下标准：
-
-### 已具备（评分 1.0）
-- 模式在 3 处以上出现，或出现在专门的配置类中
-- 跨模块一致应用的证据
-- 配置或集成可见（配置类、properties、bootstrap）
-- 配套机制齐全（如熔断有降级，缓存有淘汰）
-
-### 部分具备（评分 0.5）
-- 模式仅在 1-2 处出现
-- 跨模块应用不一致
-- 有注解但缺配置
-- 有模式但缺配套
-- 有依赖但无自定义配置
-
-### 缺失（评分 0.0）
-- 未找到相关 import、注解或配置
-- 该 DFX 关注点在代码中未得到任何处理
-
----
-
-## 各维度风险等级
-
-用于仪表盘报告中风险汇总排序。
-
-**高风险**：分布式事务(3.4)、秒杀防护(3.5)、支付事务(3.3)、库存锁(3.2)、订单幂等(3.1)
-
-**中风险**：熔断(2.5)、重试(2.7)、缓存(2.6)、超时管理(3.10)、指标监控(2.3)、异步线程(2.9)、安全DFX(2.13)、业务告警(3.8)
-
-**低风险**：日志(2.1)、异常(2.2)、健康检查(2.4)、链路追踪(2.8)、配置管理(2.10)、API版本(2.11)、优雅关闭(2.12)、状态机(3.6)、第三方降级(3.7)、漏斗(3.9)、对账(3.11)
-
----
-
-## 四、改造优先级与工作量指引
-
-为扫描出的缺失/部分具备维度提供改造建议。Claude 生成报告时，会参考下表为每个待改进项标注优先级、工作量和代码示例。
-
-### 优先级定义
-
-| 优先级 | 含义 | 建议时间 |
-|--------|------|---------|
-| **P0 — 快速见效** | 改动量小（1-3 行配置/注解），收益立竿见影 | 30min - 2h |
-| **P1 — 核心加固** | 涉及核心能力建设，需要一定的代码改造量 | 2h - 1d |
-| **P2 — 持续完善** | 涉及框架引入或架构级改造，需较大投入 | 1d - 1w+ |
-
-### 通用 DFX 维度改造指引
-
-**2.1 日志与诊断 — P0**
-- 标准改动：Service 类添加 `@Slf4j` 注解；Filter 中添加 `MDC.put("traceId", traceId)`；`logback-spring.xml` 配置 LogstashEncoder
-- 代码示例：`@Slf4j` → 自动注入 `log` 字段
-- 依赖项：Lombok 依赖、logback-encoder 依赖
-
-**2.2 异常处理 — P0**
-- 标准改动：创建 `GlobalExceptionHandler` 类（`@RestControllerAdvice`），定义 `BusinessException` 基类，创建 `ErrorResponse` DTO
-- 代码示例：`@ExceptionHandler(BusinessException.class) public ErrorResponse handleBiz(BusinessException e) { ... }`
-- 依赖项：无
-
-**2.3 指标监控 — P1**
-- 标准改动：API 入口添加 `@Timed`，关键业务点增加 `Counter` 打点，配置 Prometheus Registry
-- 代码示例：`@Timed(value = "order.create", percentiles = {0.5, 0.95, 0.99})`
-- 依赖项：`micrometer-registry-prometheus` 依赖
-
-**2.4 健康检查 — P1**
-- 标准改动：为每个外部依赖（DB/Redis/MQ）创建 `HealthIndicator`，启用 liveness/readiness 探针
-- 代码示例：`class DatabaseHealthIndicator implements HealthIndicator { ... }`
-- 依赖项：`spring-boot-starter-actuator` 依赖
-
-**2.5 熔断与韧性 — P1**
-- 标准改动：对外部 HTTP/Feign 调用添加 `@CircuitBreaker`，为每个远程服务实现 fallback 方法
-- 代码示例：`@CircuitBreaker(name = "paymentGateway", fallbackMethod = "fallbackPay") public PayResponse pay(PayRequest req) { ... }`
-- 依赖项：`spring-cloud-starter-circuitbreaker-resilience4j`
-
-**2.6 缓存 — P1**
-- 标准改动：读多写少的方法上加 `@Cacheable`，更新方法上加 `@CacheEvict`，配置 Redis TTL
-- 代码示例：`@Cacheable(value = "products", key = "#id", sync = true)`
-- 依赖项：`spring-boot-starter-cache`、Redis
-
-**2.7 重试 — P0**
-- 标准改动：幂等的远程调用或 DB 操作上加 `@Retryable`，定义 `@Recover` 兜底方法
-- 代码示例：`@Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))`
-- 依赖项：`spring-retry` 依赖
-
-**2.8 链路追踪 — P2**
-- 标准改动：添加 OpenTelemetry 依赖，配置 OTLP exporter，`@WithSpan` 标注关键方法
-- 代码示例：`@WithSpan("order.service.create") public Order createOrder(CreateOrderRequest req) { ... }`
-- 依赖项：`opentelemetry-spring-boot-starter`、Jaeger/Zipkin 后端
-
-**2.9 异步线程池 — P1**
-- 标准改动：配置 `ThreadPoolTaskExecutor` Bean，`@Async("taskExecutor")` 使用指定线程池
-- 代码示例：`ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor(); executor.setCorePoolSize(10); executor.setMaxPoolSize(20); executor.setQueueCapacity(200); executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());`
-- 依赖项：无
-
-**2.10 配置管理 — P0**
-- 标准改动：将 `@Value` 替换为 `@ConfigurationProperties`，添加 `@Validated` 校验
-- 代码示例：`@ConfigurationProperties(prefix = "order") @Validated public class OrderProperties { @Min(1) private int timeout; }`
-- 依赖项：spring-boot-starter-validation
-
-**2.11 API 版本化 — P2**
-- 标准改动：确定版本策略（URL 路径或 Header），添加 @Deprecated 标记
-- 代码示例：`@RequestMapping("/api/v1/orders")` + `@Deprecated` on old endpoints
-- 依赖项：无
-
-**2.12 优雅关闭 — P0**
-- 标准改动：`application.yml` 添加两行配置
-- 代码示例：`server.shutdown=graceful` + `spring.lifecycle.timeout-per-shutdown-phase=30s`
-- 依赖项：无
-
-**2.13 安全 DFX — P1**
-- 标准改动：对公开接口添加限流配置，校验 CORS 配置，确认 SecurityContext 在 @Async 中传递
-- 代码示例：`@RateLimiter(name = "public-api")` 或通过 Gateway 配置 `RequestRateLimiter` 过滤器
-- 依赖项：Resilience4j 或 Sentinel
-
-### 业务 DFX 维度改造指引
-
-**3.1 订单幂等 — P1**
-- 标准改动：接收 `X-Idempotency-Key` 请求头，Redis `SETNX` 原子检查，超时清理
-- 代码示例：`Boolean ok = redisTemplate.opsForValue().setIfAbsent("idempotent:" + key, "processing", Duration.ofHours(1))`
-- 依赖项：Redis
-
-**3.2 库存锁 — P1**
-- 标准改动：扣减前获取分布式锁，`finally` 块释放，`WHERE stock >= quantity` 防超卖
-- 代码示例：`lock = redisson.getLock("stock:" + skuId);` + `UPDATE sku SET stock = stock - ? WHERE id = ? AND stock >= ?`
-- 依赖项：Redisson 或 JDK Lock + DB
-
-**3.3 支付事务 — P1**
-- 标准改动：定义支付状态枚举（UNPAID/PAYING/PAID/REFUNDED/FAILED），添加回调验签，配置定时对账
-- 依赖项：支付网关 SDK
-
-**3.4 分布式事务 — P2**
-- 标准改动：引入 Outbox 模式（`@Transactional` + Outbox 表 + 定时投递）或 Seata AT
-- 代码示例：`@Transactional public void createOrder() { orderRepo.save(order); outboxRepo.save(event); }`
-- 依赖项：MQ 或 Seata
-
-**3.5 秒杀防护 — P2**
-- 标准改动：Redis 预加载库存、MQ 排队削峰、用户级限流、秒杀模块独立隔离
-- 依赖项：Redis、MQ
-
-**3.6 状态机监控 — P2**
-- 标准改动：引入状态机库（Squirrel StateMachine / stateless4j），添加卡单检测定时任务
-- 依赖项：状态机库依赖
-
-**3.7 第三方降级 — P1**
-- 标准改动：将外部服务抽成 `interface` + 实现，每个接口添加 `@CircuitBreaker`，提供 fallback 实现
-- 依赖项：Resilience4j
-
-**3.8 业务告警 — P2**
-- 标准改动：关键业务路径添加 `Counter`，配置告警阈值，关联 Prometheus Alertmanager
-- 依赖项：Micrometer、Prometheus
-
-**3.9 漏斗追踪 — P2**
-- 标准改动：在用户操作的关键转化点发布 `AnalyticsEvent`，定义 funnel 计数器
-- 依赖项：事件总线或 MQ
-
-**3.10 超时管理 — P1**
-- 标准改动：为每个外部调用配置独立的超时时间（RestTemplate/WebClient），`@Transactional(timeout = N)` 按操作配置
-- 代码示例：`@Transactional(timeout = 10)`、`factory.setReadTimeout(5000)`
-- 依赖项：无
-
-**3.11 数据对账 — P2**
-- 标准改动：编写 `@Scheduled` 定时任务，比对本地 DB 与远程（支付网关/物流）数据状态
-- 依赖项：Spring Scheduling
+**【审查意图】**：定时比对本地数据与外部（如支付网关）是否一致。
+**【代码锚点（正例）】**：`ReconciliationJob`、`checkConsistency`。
+**【状态判定】**：
+- **Present**: 有定时对账任务且处理了差异告警。
+- **Partial**: 有对账逻辑但无告警。
+- **Missing**: 无对账。
